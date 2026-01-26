@@ -1,0 +1,16 @@
+[create_proposal]
+dao_id: field = 12345field;
+title_hash: field = 98765field;
+description_hash: field = 11111field;
+voting_start_delay: u32 = 100u32;    // Voting starts in 100 blocks
+voting_duration: u32 = 14400u32;     // Voting lasts ~1 day
+
+[activate_proposal]
+proposal_id: field = 98765field;
+
+[finalize_proposal]
+proposal_id: field = 98765field;
+quorum: u32 = 5000u32;  // 50% quorum from DAO settings
+
+[mark_executed]
+proposal_id: field = 98765field;

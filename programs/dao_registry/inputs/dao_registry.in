@@ -1,0 +1,15 @@
+[create_dao]
+name_hash: field = 12345field;
+voting_period: u32 = 100800u32;  // ~7 days in blocks
+quorum: u32 = 5000u32;           // 50% quorum
+proposal_threshold: u64 = 1000u64; // Need 1000 tokens to propose
+
+[register_member]
+dao_id: field = 12345field;
+initial_voting_power: u64 = 5000u64;  // Member has 5000 tokens
+
+[update_dao_settings]
+dao_id: field = 12345field;
+new_voting_period: u32 = 151200u32;   // ~10 days
+new_quorum: u32 = 6000u32;            // 60% quorum
+new_proposal_threshold: u64 = 2000u64; // Need 2000 tokens now

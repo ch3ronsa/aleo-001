@@ -1,0 +1,10 @@
+{
+    "program": "private_vote.aleo",
+    "version": "0.0.0",
+    "description": "Private voting mechanism using zero-knowledge proofs",
+    "license": "MIT",
+    "dependencies": {
+        "dao_registry.aleo": "*",
+        "proposal.aleo": "*"
+    }
+}

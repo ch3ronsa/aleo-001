@@ -1,0 +1,6 @@
+{
+    "program": "dao_registry.aleo",
+    "version": "0.0.0",
+    "description": "DAO Registry for creating and managing decentralized autonomous organizations",
+    "license": "MIT"
+}
