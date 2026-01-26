@@ -1,19 +1,16 @@
-export interface AleoConfig {
-    network: 'testnet' | 'mainnet'
-    nodeUrl: string
-    programIds: {
-        daoRegistry: string
-        proposal: string
-        privateVote: string
-    }
+export const ALEO_NETWORK = 'testnet3'
+
+// TODO: Replace these with your actual deployed program IDs
+// If you haven't deployed yet, use these placeholders but transactions will fail on-chain
+export const PROGRAMS = {
+    DAO_REGISTRY: 'aleodao_registry_v1.aleo',
+    PROPOSAL: 'aleodao_proposal_v1.aleo',
+    PRIVATE_VOTE: 'aleodao_vote_v1.aleo',
+    TOKEN: 'aleodao_token_v1.aleo'
 }
 
-export const ALEO_CONFIG: AleoConfig = {
-    network: process.env.NEXT_PUBLIC_ALEO_NETWORK as 'testnet' || 'testnet',
-    nodeUrl: process.env.NEXT_PUBLIC_ALEO_NODE_URL || 'https://api.explorer.provable.com/v1',
-    programIds: {
-        daoRegistry: process.env.NEXT_PUBLIC_DAO_REGISTRY_ID || 'dao_registry.aleo',
-        proposal: process.env.NEXT_PUBLIC_PROPOSAL_ID || 'proposal.aleo',
-        privateVote: process.env.NEXT_PUBLIC_PRIVATE_VOTE_ID || 'private_vote.aleo',
-    },
+export const FEES = {
+    CREATE_DAO: 5_000_000, // 5 credits
+    CREATE_PROPOSAL: 2_000_000, // 2 credits
+    CAST_VOTE: 500_000, // 0.5 credits
 }

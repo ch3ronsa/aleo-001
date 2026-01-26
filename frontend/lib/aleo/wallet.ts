@@ -7,7 +7,7 @@ import { WalletName } from '@demox-labs/aleo-wallet-adapter-base'
 
 // Adapts the @demox-labs/aleo-wallet-adapter-react hook to match the API used in the app
 export const useWallet = () => {
-    const { wallet, publicKey, connected, select, disconnect } = useAleoWallet()
+    const { wallet, publicKey, connected, select, disconnect, requestTransaction } = useAleoWallet()
 
     const connect = useCallback(async () => {
         // Leo wallet is usually standard, but we could make this dynamic
@@ -22,7 +22,8 @@ export const useWallet = () => {
         isConnecting: false, // The adapter handles connection state internally
         connect,
         disconnect,
+        requestTransaction,
         // Expose original adapter values just in case
-        adapter: { wallet, publicKey, connected, select, disconnect }
+        adapter: { wallet, publicKey, connected, select, disconnect, requestTransaction }
     }
 }

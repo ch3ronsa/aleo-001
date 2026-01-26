@@ -13,12 +13,14 @@ import { useWallet } from '@/lib/aleo/wallet'
 import { useProposalStore } from '@/lib/store/proposal-store'
 import { useVoteStore, VoteChoice } from '@/lib/store/vote-store'
 import { useDAOStore } from '@/lib/store/dao-store'
+import { PROGRAMS, FEES } from '@/lib/aleo/config'
+import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
 
 export default function VotePage() {
     const params = useParams()
     const router = useRouter()
     const { toast } = useToast()
-    const { isConnected, account } = useWallet()
+    const { isConnected, account, requestTransaction } = useWallet()
     const { getProposal, updateProposalVotes } = useProposalStore()
     const { getDAO } = useDAOStore()
     const { castVote, hasVoted, isGeneratingProof } = useVoteStore()
@@ -84,25 +86,66 @@ export default function VotePage() {
             const votingPower = 100 // Mock voting power
             const voterAddress = account.address().to_string()
 
-            // Cast vote (generates ZK proof in simulation)
+            // Map choice to Aleo field type (0u8 = abstain, 1u8 = for, 2u8 = against)
+            let choiceValue = '0u8';
+            if (voteChoice === 'for') choiceValue = '1u8';
+            if (voteChoice === 'against') choiceValue = '2u8';
+
+            // Construct real Aleo transaction
+            // Note: In private voting, we would encrypt this choice locally first
+            // But for this integration demo we send it as a transition
+            const transaction = Transaction.createTransaction(
+                account.address().to_string(),
+                WalletAdapterNetwork.Testnet,
+                PROGRAMS.PRIVATE_VOTE,
+                'cast_vote',
+                [
+                    proposal.id, // Proposal ID (field)
+                    choiceValue, // Choice (u8)
+                ],
+                FEES.CAST_VOTE
+            )
+
+            // Request permission and signature from wallet
+            if (requestTransaction) {
+                await requestTransaction(transaction);
+            } else {
+                throw new Error("Wallet does not support transaction requests");
+            }
+
+            // --- Optimistic UI Updates ---
+
+            // Record local proof generation simulation
             await castVote(proposal.id, voterAddress, voteChoice, votingPower)
 
-            // Update proposal stats
+            // Update proposal stats locally
             updateProposalVotes(proposal.id, voteChoice, votingPower)
 
             toast({
-                title: "Vote Cast Successfully!",
-                description: "Your vote has been recorded privately on-chain.",
+                title: "Transaction Submitted!",
+                description: "Vote transaction sent to Aleo network.",
             })
 
             setShowConfirmDialog(false)
             router.refresh()
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to cast vote. Please try again.",
-                variant: "destructive",
-            })
+            console.error("Vote failed:", error);
+
+            // Fallback for demo if user rejects or network fails
+            if (confirm("Transaction failed or was rejected. Continue in Demo Mode?")) {
+                const votingPower = 100
+                const voterAddress = account.address().to_string()
+                await castVote(proposal.id, voterAddress, voteChoice, votingPower)
+                updateProposalVotes(proposal.id, voteChoice, votingPower)
+                setShowConfirmDialog(false)
+                router.refresh()
+            } else {
+                toast({
+                    title: "Vote Cancelled",
+                    description: "Transaction was not completed.",
+                    variant: "destructive",
+                })
+            }
         } finally {
             setIsVoting(false)
         }
