@@ -18,6 +18,9 @@ export function Header() {
                         <Link href="/proposals" className="text-zinc-400 hover:text-white transition-colors">
                             Proposals
                         </Link>
+                        <Link href="/how-it-works" className="text-zinc-400 hover:text-white transition-colors">
+                            How It Works
+                        </Link>
                     </nav>
                 </div>
                 <div className="flex items-center">
