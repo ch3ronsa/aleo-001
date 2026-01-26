@@ -1,10 +1,27 @@
 'use client'
 
 import { create } from 'zustand'
-import { Account } from '@provable/sdk'
+// import { Account } from '@provable/sdk'
+
+// Mock Account for demo/UI purposes
+class MockAccount {
+    private _address: string;
+
+    constructor() {
+        // Generate a random-looking Aleo address for demo
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        this._address = 'aleo1' + Array.from({ length: 58 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    address() {
+        return {
+            to_string: () => this._address
+        }
+    }
+}
 
 interface WalletState {
-    account: Account | null
+    account: MockAccount | null
     address: string | null
     isConnected: boolean
     isConnecting: boolean
@@ -23,7 +40,7 @@ export const useWallet = create<WalletState>((set) => ({
         try {
             // In production, use Leo Wallet or Puzzle Wallet
             // For now, create a demo account
-            const account = new Account()
+            const account = new MockAccount()
             const address = account.address().to_string()
 
             set({
