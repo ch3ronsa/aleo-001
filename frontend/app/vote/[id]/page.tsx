@@ -24,6 +24,8 @@ const GitHubIcon = ({ className }: { className?: string }) => (
     </svg>
 )
 
+import { Header } from '@/components/layout/Header'
+
 export default function VotePage() {
     const params = useParams()
     const router = useRouter()
@@ -160,20 +162,7 @@ export default function VotePage() {
 
     return (
         <div className="min-h-screen bg-[#000000] text-[#e5e5e5] font-sans selection:bg-[#3b82f6]/30">
-            {/* Nav */}
-            <nav className="border-b border-zinc-900 bg-[#000000]/80 backdrop-blur-md sticky top-0 z-50">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="text-xl font-bold aleo-text-gradient">
-                            AleoDAO
-                        </Link>
-                        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-                            <Link href="/dashboard" className="text-zinc-400 hover:text-white transition-colors">Dashboard</Link>
-                            <Link href="/proposals" className="text-zinc-400 hover:text-white transition-colors">Proposals</Link>
-                        </div>
-                    </div>
-                </div>
-            </nav>
+            <Header />
 
             <div className="container mx-auto px-4 py-8 lg:py-12 max-w-[1012px]">
                 {/* Breadcrumbs */}

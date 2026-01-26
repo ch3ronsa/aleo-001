@@ -11,28 +11,12 @@ import { useDAOStore } from '@/lib/store/dao-store'
 import { useProposalStore } from '@/lib/store/proposal-store'
 import { formatNumber } from '@/lib/utils'
 
+import { Header } from '@/components/layout/Header'
+
 export default function DashboardPage() {
     const { isConnected, account } = useWallet()
     const { daos } = useDAOStore()
     const { getActiveProposals } = useProposalStore()
-
-    if (!isConnected) {
-        return (
-            <div className="flex min-h-screen items-center justify-center p-4">
-                <Card className="max-w-md w-full">
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Welcome to AleoDAO</CardTitle>
-                        <CardDescription>
-                            Connect your privacy-preserving wallet to access the dashboard
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center pb-8">
-                        <ConnectWallet />
-                    </CardContent>
-                </Card>
-            </div>
-        )
-    }
 
     const activeProposals = getActiveProposals()
     const totalMembers = daos.reduce((acc, dao) => acc + dao.memberCount, 0)
@@ -40,27 +24,20 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Header */}
-            <header className="border-b sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
-                <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="text-xl font-bold aleo-text-gradient">
-                            AleoDAO
-                        </Link>
-                        <nav className="hidden md:flex gap-6">
-                            <Link href="/dashboard" className="text-sm font-medium text-foreground">
-                                Dashboard
-                            </Link>
-                            <Link href="/proposals" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                                Proposals
-                            </Link>
-                        </nav>
-                    </div>
-                    <ConnectWallet />
-                </div>
-            </header>
+            <Header />
 
             <div className="container mx-auto px-4 py-8">
+                {/* Intro if not connected */}
+                {!isConnected && (
+                    <div className="mb-12 p-8 rounded-2xl bg-gradient-to-br from-[#111111] to-[#000000] border border-zinc-900 text-center">
+                        <h1 className="text-3xl font-bold text-white mb-4">Welcome to AleoDAO</h1>
+                        <p className="text-zinc-400 max-w-2xl mx-auto mb-6">
+                            The first privacy-preserving governance platform built on Aleo.
+                            Connect your wallet to participate in private voting and manage your DAOs.
+                        </p>
+                        <ConnectWallet />
+                    </div>
+                )}
                 {/* Stats */}
                 <div className="grid gap-6 md:grid-cols-3 mb-8">
                     <Card>

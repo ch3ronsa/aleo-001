@@ -8,48 +8,12 @@ import { ConnectWallet } from '@/components/wallet/ConnectWallet'
 import { useWallet } from '@/lib/aleo/wallet'
 import { ProposalList } from '@/components/proposals/ProposalList'
 
+import { Header } from '@/components/layout/Header'
+
 export default function ProposalsPage() {
-    const { isConnected } = useWallet()
-
-    if (!isConnected) {
-        return (
-            <div className="flex min-h-screen items-center justify-center p-4">
-                <Card className="max-w-md w-full">
-                    <CardHeader className="text-center">
-                        <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
-                        <CardDescription>
-                            Connect your Aleo wallet to participate in governance
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex justify-center pb-8">
-                        <ConnectWallet />
-                    </CardContent>
-                </Card>
-            </div>
-        )
-    }
-
     return (
         <div className="min-h-screen bg-background">
-            {/* Header */}
-            <header className="border-b sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
-                <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                    <div className="flex items-center gap-8">
-                        <Link href="/" className="text-xl font-bold aleo-text-gradient">
-                            AleoDAO
-                        </Link>
-                        <nav className="hidden md:flex gap-6">
-                            <Link href="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                                Dashboard
-                            </Link>
-                            <Link href="/proposals" className="text-sm font-medium text-foreground">
-                                Proposals
-                            </Link>
-                        </nav>
-                    </div>
-                    <ConnectWallet />
-                </div>
-            </header>
+            <Header />
 
             <div className="container mx-auto px-4 py-8">
                 {/* Header */}

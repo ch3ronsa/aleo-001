@@ -1,11 +1,15 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight, Shield, Vote, Lock, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Header } from '@/components/layout/Header'
 
 export default function HomePage() {
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-black">
+            <Header />
             {/* Hero Section */}
             <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/20">
                 <div className="absolute inset-0 bg-grid-pattern opacity-5" />
