@@ -186,7 +186,7 @@ export default function VotePage() {
                             <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
                                 {proposal.title}
                             </h1>
-                            <div className="flex items-center gap-3 text-sm">
+                            <div className="flex items-center gap-3 text-sm mb-8">
                                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center border border-zinc-800">
                                     <User className="h-4 w-4 text-zinc-400" />
                                 </div>
@@ -196,6 +196,16 @@ export default function VotePage() {
                                 </div>
                             </div>
                         </div>
+
+                        {proposal.imageUrl && (
+                            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950">
+                                <img
+                                    src={proposal.imageUrl}
+                                    alt={proposal.title}
+                                    className="h-full w-full object-cover opacity-90 transition-opacity hover:opacity-100"
+                                />
+                            </div>
+                        )}
 
                         <Button
                             variant="outline"
@@ -207,16 +217,20 @@ export default function VotePage() {
                         </Button>
 
                         <div className="prose prose-invert max-w-none border-t border-zinc-900 pt-8 mt-4">
-                            <p className="text-lg text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                            <h3 className="text-xl font-bold text-white mb-4">Description</h3>
+                            <p className="text-lg text-zinc-400 leading-relaxed whitespace-pre-wrap mb-8">
                                 {proposal.description}
                             </p>
 
-                            <div className="mt-8 space-y-4">
-                                <h3 className="text-xl font-bold text-white">Objective</h3>
+                            <div className="mt-8 space-y-4 p-6 rounded-2xl bg-zinc-900/30 border border-zinc-800/50">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Info className="h-5 w-5 text-[#3b82f6]" />
+                                    Proposal Objective
+                                </h3>
                                 <p className="text-zinc-400">
-                                    This proposal aims to enhance the decentralized nature of our community by
-                                    implementing a protocol-level governance token distribution. This ensures
-                                    that long-term contributors have a voice in the direction of the Aleo ecosystem.
+                                    This proposal focuses on the long-term sustainability of the Aleo ecosystem.
+                                    By formalizing the governance structure, we ensure that every community
+                                    member has a private, verifiable way to influence key protocol decisions.
                                 </p>
                             </div>
                         </div>

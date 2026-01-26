@@ -62,7 +62,16 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     return (
         <Card className="hover:border-primary/50 transition-colors">
             <CardHeader className="space-y-4">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                    {proposal.imageUrl && (
+                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-zinc-900 bg-zinc-950">
+                            <img
+                                src={proposal.imageUrl}
+                                alt={proposal.title}
+                                className="h-full w-full object-cover opacity-80"
+                            />
+                        </div>
+                    )}
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground">{proposal.daoName}</span>

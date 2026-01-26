@@ -10,6 +10,7 @@ export interface Proposal {
     daoId: string
     title: string
     description: string
+    imageUrl?: string
     proposer: string
     status: ProposalStatus
     forVotes: number
@@ -47,6 +48,7 @@ export const useProposalStore = create<ProposalState>()(
                     daoId: 'dao_001',
                     title: 'Treasury Allocation for Developer Grants',
                     description: 'Allocate 10,000 tokens from the treasury to fund developer grants for privacy-preserving applications. This will help grow our ecosystem and attract new talent.',
+                    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1000',
                     proposer: 'aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc',
                     status: 'active',
                     forVotes: 75,
@@ -63,6 +65,7 @@ export const useProposalStore = create<ProposalState>()(
                     daoId: 'dao_001',
                     title: 'Update Voting Period to 5 Days',
                     description: 'Reduce the default voting period from 7 days to 5 days to speed up governance decisions while maintaining sufficient time for member participation.',
+                    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=1000',
                     proposer: 'aleo1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy3s7v2vh',
                     status: 'active',
                     forVotes: 45,
@@ -79,6 +82,7 @@ export const useProposalStore = create<ProposalState>()(
                     daoId: 'dao_002',
                     title: 'Community Ambassador Program',
                     description: 'Launch a community ambassador program to increase awareness of ZK technology. Budget: 5,000 tokens for rewards and marketing.',
+                    imageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=1000',
                     proposer: 'aleo1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz45x7wl',
                     status: 'passed',
                     forVotes: 85,
