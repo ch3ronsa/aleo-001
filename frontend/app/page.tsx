@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Shield, Vote, Lock, Zap, ExternalLink, ChevronRight } from 'lucide-react'
+import { ArrowRight, Shield, Vote, Lock, Zap, ExternalLink, ChevronRight, MessageSquare, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Header } from '@/components/layout/Header'
@@ -24,64 +24,148 @@ export default function HomePage() {
             <section className="relative overflow-hidden bg-gradient-to-b from-[#0a0a0a] to-[#000000] border-b border-zinc-900">
                 <div className="absolute inset-0 bg-grid-pattern opacity-5" />
                 <div className="container relative mx-auto px-4 py-24 sm:px-6 lg:px-8">
-                    <div className="mx-auto max-w-4xl text-center">
+                    <div className="mx-auto max-w-5xl text-center">
                         <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#3b82f6]/20 bg-[#3b82f6]/10 px-4 py-2 text-sm text-[#3b82f6]">
                             <Shield className="h-4 w-4" />
-                            <span className="font-bold tracking-tight uppercase text-[11px]">Real Aleo Testnet Live</span>
+                            <span className="font-bold tracking-tight uppercase text-[11px]">Privacy-First Governance Engine</span>
                         </div>
 
                         <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl lg:text-8xl leading-[1.1]">
-                            Private DAO Governance
-                            <span className="aleo-text-gradient block">Redesigned for Aleo</span>
+                            The Universal
+                            <span className="aleo-text-gradient block">Privacy Layer</span>
                         </h1>
 
                         <p className="mb-10 text-lg text-zinc-400 sm:text-xl max-w-2xl mx-auto leading-relaxed">
-                            Experience the official Aleo Governance aesthetic. Vote anonymously using ZK-proofs
-                            with real Leo Wallet integration.
+                            Protecting the two most critical assets in decentralized communication:
+                            <strong> Your Choice</strong> and <strong>Your Wealth</strong>.
+                            Built on Aleo's ZK-architecture.
                         </p>
 
                         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center items-center">
                             <Link href="/proposals">
                                 <Button size="lg" className="h-14 px-8 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold text-lg rounded-xl">
-                                    Explore Proposals
+                                    Launch App
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
                             <Link href="/dashboard">
                                 <Button size="lg" variant="outline" className="h-14 px-8 border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-white font-bold text-lg rounded-xl">
-                                    Launch Dashboard
+                                    Quick Dashboard
                                 </Button>
-                            </Link>
-                        </div>
-
-                        {/* Direct Links for Quick Review */}
-                        <div className="mt-12 flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-widest text-zinc-500">
-                            <span className="text-zinc-600">Quick Access:</span>
-                            <Link href="/vote/prop_001" className="hover:text-[#3b82f6] transition-colors flex items-center gap-1.5">
-                                <ExternalLink className="h-3 w-3" />
-                                Redesigned Vote Page
-                            </Link>
-                            <Link href="/proposals" className="hover:text-[#3b82f6] transition-colors flex items-center gap-1.5">
-                                <ExternalLink className="h-3 w-3" />
-                                Visual Proposal List
-                            </Link>
-                            <Link href="/dashboard" className="hover:text-[#3b82f6] transition-colors flex items-center gap-1.5">
-                                <ExternalLink className="h-3 w-3" />
-                                Member Dashboard
                             </Link>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Featured Designs Section */}
+            {/* The 4 Core Pillars */}
             <section className="container mx-auto px-4 py-24 sm:px-6 lg:px-8 border-b border-zinc-900">
+                <div className="mb-20 text-center">
+                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#3b82f6] mb-4">Core Capabilities</h2>
+                    <h3 className="text-4xl font-bold text-white mb-6">Four Pillars of Confidentiality</h3>
+                </div>
+
+                <div className="grid gap-8 md:grid-cols-2 max-w-6xl mx-auto">
+                    {/* 1. Anonymous Voting */}
+                    <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
+                        <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#3b82f6]/10 blur-3xl rounded-full group-hover:bg-[#3b82f6]/20 transition-all" />
+                        <div className="h-14 w-14 bg-[#3b82f6]/10 rounded-2xl flex items-center justify-center mb-6 border border-[#3b82f6]/20">
+                            <Lock className="h-7 w-7 text-[#3b82f6]" />
+                        </div>
+                        <h4 className="text-2xl font-bold mb-4">Anonymous Voting</h4>
+                        <p className="text-zinc-500 leading-relaxed">
+                            Your ballot choice is encrypted locally. Only a ZK-proof of validity is submitted on-chain,
+                            ensuring zero coercion and total democratic freedom.
+                        </p>
+                    </div>
+
+                    {/* 2. Private DAOs */}
+                    <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
+                        <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#22c55e]/10 blur-3xl rounded-full group-hover:bg-[#22c55e]/20 transition-all" />
+                        <div className="h-14 w-14 bg-[#22c55e]/10 rounded-2xl flex items-center justify-center mb-6 border border-[#22c55e]/20">
+                            <Shield className="h-7 w-7 text-[#22c55e]" />
+                        </div>
+                        <h4 className="text-2xl font-bold mb-4">Private DAOs</h4>
+                        <p className="text-zinc-500 leading-relaxed">
+                            Governance where member holdings and voting power remain 100% confidential.
+                            Participate securely without exposing your personal wealth.
+                        </p>
+                    </div>
+
+                    {/* 3. Whistleblower Protection */}
+                    <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
+                        <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#ef4444]/10 blur-3xl rounded-full group-hover:bg-[#ef4444]/20 transition-all" />
+                        <div className="h-14 w-14 bg-[#ef4444]/10 rounded-2xl flex items-center justify-center mb-6 border border-[#ef4444]/20">
+                            <MessageSquare className="h-7 w-7 text-[#ef4444]" />
+                        </div>
+                        <h4 className="text-2xl font-bold mb-4">Whistleblower Systems</h4>
+                        <p className="text-zinc-500 leading-relaxed">
+                            Safely report and signal critical issues. Our ZK-infrastructure provides
+                            absolute cryptographic protection for disclosures within any organization.
+                        </p>
+                    </div>
+
+                    {/* 4. Private Polls & Surveys */}
+                    <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
+                        <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#a855f7]/10 blur-3xl rounded-full group-hover:bg-[#a855f7]/20 transition-all" />
+                        <div className="h-14 w-14 bg-[#a855f7]/10 rounded-2xl flex items-center justify-center mb-6 border border-[#a855f7]/20">
+                            <BarChart3 className="h-7 w-7 text-[#a855f7]" />
+                        </div>
+                        <h4 className="text-2xl font-bold mb-4">Private Polls & Surveys</h4>
+                        <p className="text-zinc-500 leading-relaxed">
+                            Gather honest, unbiased data from your community without the pressure of
+                            surveillance. Perfect for sensitive opinions and consensus gathering.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* How It Works - The ZK-Workflow */}
+            <section className="container mx-auto px-4 py-24 sm:px-6 lg:px-8 border-b border-zinc-900">
+                <div className="mb-20 text-center">
+                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#3b82f6] mb-4">The ZK-Workflow</h2>
+                    <h3 className="text-4xl font-bold text-white mb-6">How It Works</h3>
+                </div>
+
+                <div className="max-w-4xl mx-auto">
+                    {[
+                        {
+                            step: '01',
+                            title: 'Local Proof Generation',
+                            desc: 'When you take an action (vote or report), the Leo Wallet generates a Zero-Knowledge Proof on your machine. Your private data never touches the internet.'
+                        },
+                        {
+                            step: '02',
+                            title: 'Private Transmission',
+                            desc: 'Only the mathematical proof is sent to the Aleo network. No observer can link the transaction to your choices or your wallet balance.'
+                        },
+                        {
+                            step: '03',
+                            title: 'Cryptographic Validation',
+                            desc: 'The smart contract verifies the proof is mathematically sound and aggregates it into the final result. Verification is public; data is private.'
+                        }
+                    ].map((item, idx) => (
+                        <div key={idx} className="flex gap-8 mb-16 last:mb-0 group">
+                            <div className="text-4xl font-black text-zinc-800 group-hover:text-[#3b82f6]/30 transition-colors pt-1">
+                                {item.step}
+                            </div>
+                            <div className="space-y-3">
+                                <h4 className="text-2xl font-bold text-white">{item.title}</h4>
+                                <p className="text-zinc-500 leading-relaxed max-w-2xl">
+                                    {item.desc}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* Live Governance Preview */}
+            <section className="container mx-auto px-4 py-24 sm:px-6 lg:px-8">
                 <div className="mb-16 text-center">
-                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#3b82f6] mb-4">Live Governance</h2>
-                    <h3 className="text-4xl font-bold text-white mb-6">Experience the New UI</h3>
+                    <h3 className="text-3xl font-bold text-white mb-6">Latest Private Proposals</h3>
                     <p className="mx-auto max-w-2xl text-zinc-400">
-                        We've implemented a high-fidelity redesign matching the official Aleo Governance platform.
-                        Browse real proposals with rich media support.
+                        Explore real-time governance activity with high-fidelity media support.
                     </p>
                 </div>
 
@@ -125,47 +209,14 @@ export default function HomePage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <CardFooter className="px-6 py-4 bg-zinc-900/30 border-t border-zinc-900 flex justify-between items-center group-hover:bg-[#3b82f6]/5 transition-all">
-                                        <span className="text-[10px] font-bold uppercase text-zinc-500">View Proposal</span>
-                                        <ChevronRight className="h-4 w-4 text-zinc-500 group-hover:text-[#3b82f6] group-hover:translate-x-1 transition-all" />
+                                    <CardFooter className="px-6 py-4 bg-zinc-900/30 border-t border-zinc-900 flex justify-between items-center group-hover:bg-[#3b82f6]/5 transition-all text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-[#3b82f6]">
+                                        Explore Ballot
+                                        <ChevronRight className="h-4 w-4" />
                                     </CardFooter>
                                 </Card>
                             </Link>
                         )
                     })}
-                </div>
-            </section>
-
-            {/* Features Stats Section */}
-            <section className="container mx-auto px-4 py-24 sm:px-6 lg:px-8 bg-[#050505]">
-                <div className="grid gap-12 md:grid-cols-3 text-center max-w-5xl mx-auto">
-                    <div className="space-y-4">
-                        <div className="h-16 w-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto border border-zinc-800">
-                            <Vote className="h-8 w-8 text-[#3b82f6]" />
-                        </div>
-                        <h4 className="text-xl font-bold">Anonymous</h4>
-                        <p className="text-zinc-500 text-sm leading-relaxed">
-                            Choices are encrypted using ZK-proofs. Only the final result is public.
-                        </p>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="h-16 w-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto border border-zinc-800">
-                            <Lock className="h-8 w-8 text-[#3b82f6]" />
-                        </div>
-                        <h4 className="text-xl font-bold">Verifiable</h4>
-                        <p className="text-zinc-500 text-sm leading-relaxed">
-                            Cryptographic integrity ensures every vote is counted accurately.
-                        </p>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="h-16 w-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto border border-zinc-800">
-                            <Zap className="h-8 w-8 text-[#3b82f6]" />
-                        </div>
-                        <h4 className="text-xl font-bold">Instant</h4>
-                        <p className="text-zinc-500 text-sm leading-relaxed">
-                            Fast signature aggregation using Aleo's optimized blockchain.
-                        </p>
-                    </div>
                 </div>
             </section>
 
