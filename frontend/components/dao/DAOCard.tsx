@@ -1,21 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { Users, FileText, Calendar, ArrowRight } from 'lucide-react'
+import { Users, FileText, Calendar, ArrowRight, Wallet } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatNumber, formatDate } from '@/lib/utils'
-
-interface DAO {
-    id: string
-    name: string
-    description: string
-    memberCount: number
-    proposalCount: number
-    votingPeriod: number
-    quorum: number
-    createdAt: number
-}
+import { DAO } from '@/lib/store/dao-store'
 
 interface DAOCardProps {
     dao: DAO
@@ -49,7 +39,15 @@ export function DAOCard({ dao }: DAOCardProps) {
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Quorum:</span>
-                        <span className="font-medium">{dao.quorum / 100}%</span>
+                        <span className="font-medium">{dao.quorumPercentage}%</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Treasury:</span>
+                        <span className="font-medium flex items-center gap-1">
+                            <Wallet className="h-3 w-3" />
+                            {formatNumber(dao.treasuryBalance)} tokens
+                        </span>
                     </div>
 
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -60,7 +58,7 @@ export function DAOCard({ dao }: DAOCardProps) {
             </CardContent>
 
             <CardFooter>
-                <Link href={`/dashboard/${dao.id}`} className="w-full">
+                <Link href={`/dao/${dao.id}`} className="w-full">
                     <Button className="w-full gap-2">
                         View DAO
                         <ArrowRight className="h-4 w-4" />

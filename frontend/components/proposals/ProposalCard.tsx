@@ -6,28 +6,17 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { calculatePercentage, formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { Proposal, ProposalStatus } from '@/lib/store/proposal-store'
 
-interface Proposal {
-    id: string
-    daoId: string
+interface ProposalWithDAO extends Proposal {
     daoName: string
-    title: string
-    description: string
-    status: 'pending' | 'active' | 'succeeded' | 'failed' | 'executed'
-    votingStart: number
-    votingEnd: number
-    yesVotes: number
-    noVotes: number
-    totalVotes: number
-    quorum: number
-    createdAt: number
 }
 
 interface ProposalCardProps {
-    proposal: Proposal
+    proposal: ProposalWithDAO
 }
 
-const statusConfig = {
+const statusConfig: Record<ProposalStatus, { label: string; icon: typeof Clock; className: string }> = {
     pending: {
         label: 'Pending',
         icon: Clock,
@@ -38,13 +27,13 @@ const statusConfig = {
         icon: Timer,
         className: 'text-primary bg-primary/10',
     },
-    succeeded: {
-        label: 'Succeeded',
+    passed: {
+        label: 'Passed',
         icon: CheckCircle2,
         className: 'text-green-500 bg-green-500/10',
     },
-    failed: {
-        label: 'Failed',
+    rejected: {
+        label: 'Rejected',
         icon: XCircle,
         className: 'text-red-500 bg-red-500/10',
     },
@@ -59,15 +48,16 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     const status = statusConfig[proposal.status]
     const StatusIcon = status.icon
 
-    const yesPercentage = proposal.totalVotes > 0
-        ? calculatePercentage(proposal.yesVotes, proposal.totalVotes)
+    const totalVotePower = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes
+    const forPercentage = totalVotePower > 0
+        ? calculatePercentage(proposal.forVotes, totalVotePower)
         : 0
-    const noPercentage = proposal.totalVotes > 0
-        ? calculatePercentage(proposal.noVotes, proposal.totalVotes)
+    const againstPercentage = totalVotePower > 0
+        ? calculatePercentage(proposal.againstVotes, totalVotePower)
         : 0
 
     const isActive = proposal.status === 'active'
-    const timeLeft = isActive ? Math.floor((proposal.votingEnd - Date.now() / 1000) / 86400) : 0
+    const timeLeft = isActive ? Math.floor((proposal.endTime - Date.now()) / (86400 * 1000)) : 0
 
     return (
         <Card className="hover:border-primary/50 transition-colors">
@@ -93,15 +83,15 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
                 </div>
 
                 {/* Voting Progress */}
-                {proposal.totalVotes > 0 && (
+                {totalVotePower > 0 && (
                     <div className="space-y-3">
                         <div className="flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2">
                                 <div className="h-3 w-3 rounded-full bg-green-500" />
-                                <span className="font-medium">Yes: {yesPercentage}%</span>
+                                <span className="font-medium">For: {forPercentage}%</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="font-medium">No: {noPercentage}%</span>
+                                <span className="font-medium">Against: {againstPercentage}%</span>
                                 <div className="h-3 w-3 rounded-full bg-red-500" />
                             </div>
                         </div>
@@ -109,16 +99,16 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
                         <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
                             <div
                                 className="absolute left-0 h-full bg-green-500 transition-all"
-                                style={{ width: `${yesPercentage}%` }}
+                                style={{ width: `${forPercentage}%` }}
                             />
                             <div
                                 className="absolute right-0 h-full bg-red-500 transition-all"
-                                style={{ width: `${noPercentage}%` }}
+                                style={{ width: `${againstPercentage}%` }}
                             />
                         </div>
 
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{proposal.totalVotes.toLocaleString()} votes cast</span>
+                            <span>{proposal.totalVoters} voters</span>
                             {isActive && timeLeft > 0 && (
                                 <span>{timeLeft} days left</span>
                             )}
@@ -131,7 +121,7 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
                 <span className="text-xs text-muted-foreground">
                     Created {formatDate(proposal.createdAt)}
                 </span>
-                <Link href={`/proposals/${proposal.id}`}>
+                <Link href={`/vote/${proposal.id}`}>
                     <Button variant={isActive ? 'default' : 'outline'} size="sm">
                         {isActive ? 'Vote Now' : 'View Details'}
                     </Button>

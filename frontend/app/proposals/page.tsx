@@ -13,15 +13,15 @@ export default function ProposalsPage() {
 
     if (!isConnected) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <Card className="max-w-md">
-                    <CardHeader>
-                        <CardTitle>Connect Your Wallet</CardTitle>
+            <div className="flex min-h-screen items-center justify-center p-4">
+                <Card className="max-w-md w-full">
+                    <CardHeader className="text-center">
+                        <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
                         <CardDescription>
-                            Connect your Aleo wallet to view proposals
+                            Connect your Aleo wallet to participate in governance
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex justify-center pb-8">
                         <ConnectWallet />
                     </CardContent>
                 </Card>
@@ -32,7 +32,7 @@ export default function ProposalsPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <header className="border-b">
+            <header className="border-b sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
                 <div className="container mx-auto flex h-16 items-center justify-between px-4">
                     <div className="flex items-center gap-8">
                         <Link href="/" className="text-xl font-bold aleo-text-gradient">
@@ -58,24 +58,22 @@ export default function ProposalsPage() {
                         <Link href="/dashboard">
                             <Button variant="ghost" size="sm" className="gap-2">
                                 <ArrowLeft className="h-4 w-4" />
-                                Back to Dashboard
+                                Back
                             </Button>
                         </Link>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div>
-                            <h1 className="text-3xl font-bold">All Proposals</h1>
+                            <h1 className="text-3xl font-bold">Governance Proposals</h1>
                             <p className="text-muted-foreground">
-                                View and vote on proposals across all DAOs
+                                View and cast private votes on active proposals
                             </p>
                         </div>
-                        <Link href="/proposals/create">
-                            <Button className="gap-2">
-                                <Plus className="h-4 w-4" />
-                                Create Proposal
-                            </Button>
-                        </Link>
+                        {/* 
+                           Note: Proposal creation is typically done from within a specific DAO page.
+                           We hide the global create button to simplify the flow and direct users to specific DAOs.
+                         */}
                     </div>
                 </div>
 

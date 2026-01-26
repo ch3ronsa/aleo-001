@@ -1,27 +1,32 @@
 'use client'
 
 import Link from 'next/link'
-import { Plus, Users, FileText, TrendingUp } from 'lucide-react'
+import { Plus, Users, FileText, TrendingUp, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConnectWallet } from '@/components/wallet/ConnectWallet'
 import { useWallet } from '@/lib/aleo/wallet'
 import { DAOList } from '@/components/dao/DAOList'
+import { useDAOStore } from '@/lib/store/dao-store'
+import { useProposalStore } from '@/lib/store/proposal-store'
+import { formatNumber } from '@/lib/utils'
 
 export default function DashboardPage() {
-    const { isConnected } = useWallet()
+    const { isConnected, account } = useWallet()
+    const { daos } = useDAOStore()
+    const { getActiveProposals } = useProposalStore()
 
     if (!isConnected) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <Card className="max-w-md">
-                    <CardHeader>
-                        <CardTitle>Connect Your Wallet</CardTitle>
+            <div className="flex min-h-screen items-center justify-center p-4">
+                <Card className="max-w-md w-full">
+                    <CardHeader className="text-center">
+                        <CardTitle className="text-2xl">Welcome to AleoDAO</CardTitle>
                         <CardDescription>
-                            Connect your Aleo wallet to access the dashboard
+                            Connect your privacy-preserving wallet to access the dashboard
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex justify-center pb-8">
                         <ConnectWallet />
                     </CardContent>
                 </Card>
@@ -29,10 +34,14 @@ export default function DashboardPage() {
         )
     }
 
+    const activeProposals = getActiveProposals()
+    const totalMembers = daos.reduce((acc, dao) => acc + dao.memberCount, 0)
+    const totalTreasury = daos.reduce((acc, dao) => acc + dao.treasuryBalance, 0)
+
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <header className="border-b">
+            <header className="border-b sticky top-0 z-10 bg-background/80 backdrop-blur-sm">
                 <div className="container mx-auto flex h-16 items-center justify-between px-4">
                     <div className="flex items-center gap-8">
                         <Link href="/" className="text-xl font-bold aleo-text-gradient">
@@ -62,9 +71,9 @@ export default function DashboardPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">12</div>
+                            <div className="text-2xl font-bold">{daos.length}</div>
                             <p className="text-xs text-muted-foreground">
-                                +2 from last week
+                                {totalMembers} total members
                             </p>
                         </CardContent>
                     </Card>
@@ -77,9 +86,9 @@ export default function DashboardPage() {
                             <FileText className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">8</div>
+                            <div className="text-2xl font-bold">{activeProposals.length}</div>
                             <p className="text-xs text-muted-foreground">
-                                Awaiting your vote
+                                Across all DAOs
                             </p>
                         </CardContent>
                     </Card>
@@ -87,25 +96,25 @@ export default function DashboardPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Voting Power
+                                Total Value Locked
                             </CardTitle>
-                            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                            <Wallet className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">5,000</div>
+                            <div className="text-2xl font-bold">{formatNumber(totalTreasury)}</div>
                             <p className="text-xs text-muted-foreground">
-                                Across all DAOs
+                                Tokens in DAO treasuries
                             </p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* DAO List */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold">Your DAOs</h2>
+                        <h2 className="text-2xl font-bold">Explore DAOs</h2>
                         <p className="text-muted-foreground">
-                            DAOs you're a member of or have created
+                            Join decentralized communities built on privacy
                         </p>
                     </div>
                     <Link href="/dashboard/create">

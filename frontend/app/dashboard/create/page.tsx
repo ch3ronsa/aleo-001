@@ -9,10 +9,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/components/ui/use-toast'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { useWallet } from '@/lib/aleo/wallet'
+import { useDAOStore } from '@/lib/store/dao-store'
 
 export default function CreateDAOPage() {
     const router = useRouter()
     const { toast } = useToast()
+    const { isConnected, account } = useWallet()
+    const { createDAO } = useDAOStore()
     const [isCreating, setIsCreating] = useState(false)
 
     const [formData, setFormData] = useState({
@@ -25,11 +29,32 @@ export default function CreateDAOPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        if (!isConnected || !account) {
+            toast({
+                title: "Wallet not connected",
+                description: "Please connect your Aleo wallet to create a DAO.",
+                variant: "destructive",
+            })
+            return
+        }
+
         setIsCreating(true)
 
         try {
-            // TODO: Call dao_registry.aleo create_dao transition
-            await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate transaction
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 2000))
+
+            const votingPeriod = parseInt(formData.votingPeriod)
+            const quorumPercentage = parseInt(formData.quorum) / 100 // Convert from bps (5000) to percentage (50)
+
+            createDAO({
+                name: formData.name,
+                description: formData.description,
+                creator: account.address().to_string(),
+                votingPeriod,
+                quorumPercentage
+            })
 
             toast({
                 title: "DAO Created!",

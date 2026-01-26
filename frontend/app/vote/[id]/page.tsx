@@ -1,48 +1,94 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Shield } from 'lucide-react'
+import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Shield, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { calculatePercentage } from '@/lib/utils'
+import { useWallet } from '@/lib/aleo/wallet'
+import { useProposalStore } from '@/lib/store/proposal-store'
+import { useVoteStore, VoteChoice } from '@/lib/store/vote-store'
+import { useDAOStore } from '@/lib/store/dao-store'
 
 export default function VotePage() {
     const params = useParams()
     const router = useRouter()
     const { toast } = useToast()
-    const [voteChoice, setVoteChoice] = useState<boolean | null>(null)
+    const { isConnected, account } = useWallet()
+    const { getProposal, updateProposalVotes } = useProposalStore()
+    const { getDAO } = useDAOStore()
+    const { castVote, hasVoted, isGeneratingProof } = useVoteStore()
+
+    const [voteChoice, setVoteChoice] = useState<VoteChoice | null>(null)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     const [isVoting, setIsVoting] = useState(false)
 
-    // Mock proposal data
-    const proposal = {
-        id: params.id,
-        title: 'Fund zkML Research Initiative',
-        description: 'Allocate 50,000 tokens to research zero-knowledge machine learning applications. This initiative aims to explore the intersection of ML and ZK proofs, potentially unlocking new use cases for privacy-preserving AI.',
-        daoName: 'Aleo Builders DAO',
-        votingEnd: Date.now() / 1000 + 86400 * 6,
-        yesVotes: 12500,
-        noVotes: 3200,
-        totalVotes: 15700,
+    // Load data
+    const proposalId = params.id as string
+    const proposal = getProposal(proposalId)
+    const dao = proposal ? getDAO(proposal.daoId) : undefined
+
+    // Check if user has already voted
+    const userHasVoted = isConnected && account ? hasVoted(proposalId, account.address().to_string()) : false
+
+    if (!proposal || !dao) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-lg font-semibold">Proposal Not Found</h2>
+                    <Button variant="link" onClick={() => router.push('/proposals')}>
+                        Go Back
+                    </Button>
+                </div>
+            </div>
+        )
     }
 
-    const yesPercentage = calculatePercentage(proposal.yesVotes, proposal.totalVotes)
-    const noPercentage = calculatePercentage(proposal.noVotes, proposal.totalVotes)
+    const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes
+    const yesPercentage = calculatePercentage(proposal.forVotes, totalVotes)
+    const noPercentage = calculatePercentage(proposal.againstVotes, totalVotes)
+    const abstainPercentage = calculatePercentage(proposal.abstainVotes, totalVotes)
 
-    const handleVote = (choice: boolean) => {
+    const handleVote = (choice: VoteChoice) => {
+        if (!isConnected) {
+            toast({
+                title: "Connect Wallet",
+                description: "Please connect your wallet to vote.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        if (userHasVoted) {
+            toast({
+                title: "Already Voted",
+                description: "You have already cast your vote on this proposal.",
+                variant: "destructive",
+            })
+            return
+        }
+
         setVoteChoice(choice)
         setShowConfirmDialog(true)
     }
 
     const confirmVote = async () => {
+        if (!account || !voteChoice) return
+
         setIsVoting(true)
         try {
-            // TODO: Call private_vote.aleo cast_vote transition
-            await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate transaction
+            const votingPower = 100 // Mock voting power
+            const voterAddress = account.address().to_string()
+
+            // Cast vote (generates ZK proof in simulation)
+            await castVote(proposal.id, voterAddress, voteChoice, votingPower)
+
+            // Update proposal stats
+            updateProposalVotes(proposal.id, voteChoice, votingPower)
 
             toast({
                 title: "Vote Cast Successfully!",
@@ -50,7 +96,7 @@ export default function VotePage() {
             })
 
             setShowConfirmDialog(false)
-            router.push('/proposals')
+            router.refresh()
         } catch (error) {
             toast({
                 title: "Error",
@@ -61,6 +107,8 @@ export default function VotePage() {
             setIsVoting(false)
         }
     }
+
+    const isVoteDisabled = !isConnected || userHasVoted || proposal.status !== 'active'
 
     return (
         <div className="min-h-screen bg-background">
@@ -77,7 +125,7 @@ export default function VotePage() {
             <div className="container mx-auto max-w-4xl px-4 py-8">
                 {/* Proposal Info */}
                 <div className="mb-8">
-                    <p className="text-sm text-muted-foreground mb-2">{proposal.daoName}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{dao.name}</p>
                     <h1 className="text-3xl font-bold mb-4">{proposal.title}</h1>
                     <p className="text-muted-foreground">{proposal.description}</p>
                 </div>
@@ -99,7 +147,7 @@ export default function VotePage() {
                                         <div className="flex items-center gap-2">
                                             <div className="h-3 w-3 rounded-full bg-green-500" />
                                             <span className="font-medium">Yes: {yesPercentage}%</span>
-                                            <span className="text-muted-foreground">({proposal.yesVotes.toLocaleString()} votes)</span>
+                                            <span className="text-muted-foreground">({proposal.forVotes.toLocaleString()} votes)</span>
                                         </div>
                                     </div>
 
@@ -116,7 +164,7 @@ export default function VotePage() {
                                         <div className="flex items-center gap-2">
                                             <div className="h-3 w-3 rounded-full bg-red-500" />
                                             <span className="font-medium">No: {noPercentage}%</span>
-                                            <span className="text-muted-foreground">({proposal.noVotes.toLocaleString()} votes)</span>
+                                            <span className="text-muted-foreground">({proposal.againstVotes.toLocaleString()} votes)</span>
                                         </div>
                                     </div>
 
@@ -128,48 +176,96 @@ export default function VotePage() {
                                     </div>
                                 </div>
 
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-3 w-3 rounded-full bg-gray-500" />
+                                            <span className="font-medium">Abstain: {abstainPercentage}%</span>
+                                            <span className="text-muted-foreground">({proposal.abstainVotes.toLocaleString()} votes)</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+                                        <div
+                                            className="absolute left-0 h-full bg-gray-500 transition-all"
+                                            style={{ width: `${abstainPercentage}%` }}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="pt-2 text-sm text-muted-foreground">
-                                    Total: {proposal.totalVotes.toLocaleString()} votes cast
+                                    Total: {totalVotes.toLocaleString()} votes cast
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* Vote Actions */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Cast Your Vote</CardTitle>
-                                <CardDescription>
-                                    Your choice will be private and cannot be revealed
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="grid gap-4 sm:grid-cols-2">
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    className="h-auto flex-col gap-3 py-8 border-green-500/20 hover:border-green-500 hover:bg-green-500/5"
-                                    onClick={() => handleVote(true)}
-                                >
-                                    <ThumbsUp className="h-8 w-8 text-green-500" />
-                                    <div className="text-center">
-                                        <div className="font-semibold text-lg">Vote Yes</div>
-                                        <div className="text-xs text-muted-foreground">Support this proposal</div>
-                                    </div>
-                                </Button>
+                        {proposal.status === 'active' && !userHasVoted ? (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Cast Your Vote</CardTitle>
+                                    <CardDescription>
+                                        Your choice will be private and cannot be revealed
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="grid gap-4 sm:grid-cols-3">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="h-auto flex-col gap-3 py-8 border-green-500/20 hover:border-green-500 hover:bg-green-500/5"
+                                        onClick={() => handleVote('for')}
+                                        disabled={isVoteDisabled}
+                                    >
+                                        <ThumbsUp className="h-8 w-8 text-green-500" />
+                                        <div className="text-center">
+                                            <div className="font-semibold text-lg">Vote Yes</div>
+                                            <div className="text-xs text-muted-foreground">Support</div>
+                                        </div>
+                                    </Button>
 
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    className="h-auto flex-col gap-3 py-8 border-red-500/20 hover:border-red-500 hover:bg-red-500/5"
-                                    onClick={() => handleVote(false)}
-                                >
-                                    <ThumbsDown className="h-8 w-8 text-red-500" />
-                                    <div className="text-center">
-                                        <div className="font-semibold text-lg">Vote No</div>
-                                        <div className="text-xs text-muted-foreground">Reject this proposal</div>
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="h-auto flex-col gap-3 py-8 border-red-500/20 hover:border-red-500 hover:bg-red-500/5"
+                                        onClick={() => handleVote('against')}
+                                        disabled={isVoteDisabled}
+                                    >
+                                        <ThumbsDown className="h-8 w-8 text-red-500" />
+                                        <div className="text-center">
+                                            <div className="font-semibold text-lg">Vote No</div>
+                                            <div className="text-xs text-muted-foreground">Reject</div>
+                                        </div>
+                                    </Button>
+
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="h-auto flex-col gap-3 py-8 border-gray-500/20 hover:border-gray-500 hover:bg-gray-500/5"
+                                        onClick={() => handleVote('abstain')}
+                                        disabled={isVoteDisabled}
+                                    >
+                                        <Minus className="h-8 w-8 text-gray-500" />
+                                        <div className="text-center">
+                                            <div className="font-semibold text-lg">Abstain</div>
+                                            <div className="text-xs text-muted-foreground">Neutral</div>
+                                        </div>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        ) : userHasVoted ? (
+                            <Card className="border-green-500/20 bg-green-500/5">
+                                <CardHeader>
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="h-6 w-6 text-green-500" />
+                                        <CardTitle>Vote Confirmed</CardTitle>
                                     </div>
-                                </Button>
-                            </CardContent>
-                        </Card>
+                                    <CardDescription>
+                                        You have successfully cast a private vote on this proposal.
+                                        Only you know what you voted for.
+                                    </CardDescription>
+                                </CardHeader>
+                            </Card>
+                        ) : null}
                     </div>
 
                     {/* Privacy Info Sidebar */}
@@ -212,16 +308,16 @@ export default function VotePage() {
                             </CardHeader>
                             <CardContent className="space-y-3 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Time Left:</span>
-                                    <span className="font-medium">6 days</span>
+                                    <span className="text-muted-foreground">Status:</span>
+                                    <span className="font-medium capitalize">{proposal.status}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Quorum:</span>
-                                    <span className="font-medium">50%</span>
+                                    <span className="font-medium">{dao.quorumPercentage}%</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Your Power:</span>
-                                    <span className="font-medium">5,000</span>
+                                    <span className="font-medium">100</span>
                                 </div>
                             </CardContent>
                         </Card>
@@ -233,19 +329,30 @@ export default function VotePage() {
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Confirm Your Vote</DialogTitle>
+                        <DialogTitle>Confirm Your Private Vote</DialogTitle>
                         <DialogDescription>
-                            You are about to vote <strong>{voteChoice ? 'YES' : 'NO'}</strong> on this proposal.
-                            This action cannot be undone.
+                            You are about to vote <strong>{voteChoice?.toUpperCase()}</strong> on this proposal.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-3 py-4">
+                        <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
+                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-background border">
+                                {isGeneratingProof || isVoting ? (
+                                    <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
+                                ) : (
+                                    <Lock className="h-5 w-5 text-primary" />
+                                )}
+                            </div>
+                            <div>
+                                <h4 className="font-medium">Generating Zero-Knowledge Proof</h4>
+                                <p className="text-sm text-muted-foreground">
+                                    {isVoting ? "Encrypting vote & generating proof..." : "Your vote choice is encrypted locally."}
+                                </p>
+                            </div>
+                        </div>
+
                         <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                            <h4 className="font-medium mb-2 flex items-center gap-2">
-                                <Lock className="h-4 w-4" />
-                                Privacy Guaranteed
-                            </h4>
                             <ul className="space-y-2 text-sm text-muted-foreground">
                                 <li>• Your vote choice will never be revealed</li>
                                 <li>• Only you will know how you voted</li>
@@ -259,7 +366,7 @@ export default function VotePage() {
                             Cancel
                         </Button>
                         <Button onClick={confirmVote} disabled={isVoting}>
-                            {isVoting ? 'Submitting...' : 'Confirm Vote'}
+                            {isVoting ? 'Proving & Submitting...' : 'Confirm & Sign'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
