@@ -1,8 +1,9 @@
 'use client'
 
+import React from 'react'
 import { Wallet, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useWallet } from '@/lib/aleo/wallet'
+import { useWallet } from '@demox-labs/aleo-wallet-adapter-react'
 import { formatAddress } from '@/lib/utils'
 import {
     DropdownMenu,
@@ -12,19 +13,26 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { WalletAdapterNetwork, WalletName } from '@demox-labs/aleo-wallet-adapter-base'
 
 export function ConnectWallet() {
-    const { address, isConnected, isConnecting, connect, disconnect } = useWallet()
+    const { publicKey, wallet, requestTransaction, disconnect, select } = useWallet()
 
-    if (!isConnected) {
+    // Function to handle connection
+    const handleConnect = () => {
+        // This brings up the wallet selection modal from the adapter if implemented,
+        // or we can force select 'Leo Wallet'
+        select('Leo Wallet' as WalletName)
+    }
+
+    if (!publicKey) {
         return (
             <Button
-                onClick={connect}
-                disabled={isConnecting}
+                onClick={handleConnect}
                 className="gap-2"
             >
                 <Wallet className="h-4 w-4" />
-                {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                Connect Wallet
             </Button>
         )
     }
@@ -34,13 +42,13 @@ export function ConnectWallet() {
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
                     <Wallet className="h-4 w-4" />
-                    {formatAddress(address || '')}
+                    {formatAddress(publicKey)}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={disconnect} className="gap-2">
+                <DropdownMenuItem onClick={() => disconnect()} className="gap-2">
                     <LogOut className="h-4 w-4" />
                     Disconnect
                 </DropdownMenuItem>

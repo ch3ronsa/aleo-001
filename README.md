@@ -123,7 +123,7 @@ npm run dev
 - **Smart Contracts**: Leo (Aleo's programming language)
 - **Frontend**: Next.js 14, TypeScript, TailwindCSS
 - **Blockchain**: Aleo Testnet/Mainnet
-- **SDK**: @provable/sdk
+- **SDK**: @demox-labs/aleo-wallet-adapter
 - **State Management**: Zustand
 - **UI Components**: shadcn/ui
 
@@ -160,14 +160,14 @@ npm run dev
 - **Discord**: [Your Discord Handle]
 - **Aleo Wallet**: [Your Wallet Address]
 
-## � Resources
+## 📚 Resources
 
 - [Aleo Developer Docs](https://developer.aleo.org/)
 - [Leo Language Documentation](https://docs.leo-lang.org/leo)
 - [Leo Playground](https://play.leo-lang.org/)
 - [Aleo Testnet Faucet](https://faucet.aleo.org/)
 
-## �🔗 Links
+## 🔗 Links
 
 - [Live Demo](https://aleodao.vercel.app)
 - [GitHub Repository](https://github.com/ch3ronsa/aleo-001)

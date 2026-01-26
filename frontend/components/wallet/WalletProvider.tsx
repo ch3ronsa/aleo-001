@@ -1,20 +1,28 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useWallet } from '@/lib/aleo/wallet'
+import React, { useMemo } from 'react'
+import { WalletProvider as AleoWalletProvider } from '@demox-labs/aleo-wallet-adapter-react'
+import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo'
+import { DecryptPermission, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-    const { connect } = useWallet()
+    const wallets = useMemo(
+        () => [
+            new LeoWalletAdapter({
+                appName: 'AleoDAO',
+            }),
+        ],
+        []
+    )
 
-    useEffect(() => {
-        // Auto-reconnect if previously connected
-        if (typeof window !== 'undefined') {
-            const wasConnected = localStorage.getItem('aleo_wallet_connected')
-            if (wasConnected === 'true') {
-                connect()
-            }
-        }
-    }, [connect])
-
-    return <>{children}</>
+    return (
+        <AleoWalletProvider
+            wallets={wallets}
+            decryptPermission={DecryptPermission.UponRequest}
+            network={WalletAdapterNetwork.Testnet}
+            autoConnect={true}
+        >
+            {children}
+        </AleoWalletProvider>
+    )
 }
