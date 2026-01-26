@@ -16,7 +16,9 @@ export function formatNumber(num: number | string): string {
 }
 
 export function formatDate(timestamp: number): string {
-    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+    // Detect if timestamp is in seconds or milliseconds
+    const date = timestamp > 1000000000000 ? new Date(timestamp) : new Date(timestamp * 1000)
+    return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',

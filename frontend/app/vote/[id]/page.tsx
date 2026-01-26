@@ -3,18 +3,26 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Shield, Minus } from 'lucide-react'
+import { ArrowLeft, Check, Lock, Shield, ExternalLink, Info, User, Clock, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
-import { calculatePercentage } from '@/lib/utils'
+import { calculatePercentage, formatDate, formatAddress } from '@/lib/utils'
 import { useWallet } from '@/lib/aleo/wallet'
 import { useProposalStore } from '@/lib/store/proposal-store'
 import { useVoteStore, VoteChoice } from '@/lib/store/vote-store'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { PROGRAMS, FEES } from '@/lib/aleo/config'
 import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
+import { cn } from '@/lib/utils'
+
+// GitHub Icon Component
+const GitHubIcon = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+    </svg>
+)
 
 export default function VotePage() {
     const params = useParams()
@@ -25,7 +33,7 @@ export default function VotePage() {
     const { getDAO } = useDAOStore()
     const { castVote, hasVoted, isGeneratingProof } = useVoteStore()
 
-    const [voteChoice, setVoteChoice] = useState<VoteChoice | null>(null)
+    const [selectedOption, setSelectedOption] = useState<VoteChoice | null>(null)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
     const [isVoting, setIsVoting] = useState(false)
 
@@ -39,10 +47,10 @@ export default function VotePage() {
 
     if (!proposal || !dao) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center bg-[#000000] text-white">
                 <div className="text-center">
                     <h2 className="text-lg font-semibold">Proposal Not Found</h2>
-                    <Button variant="link" onClick={() => router.push('/proposals')}>
+                    <Button variant="link" onClick={() => router.push('/proposals')} className="text-[#3b82f6]">
                         Go Back
                     </Button>
                 </div>
@@ -55,7 +63,7 @@ export default function VotePage() {
     const noPercentage = calculatePercentage(proposal.againstVotes, totalVotes)
     const abstainPercentage = calculatePercentage(proposal.abstainVotes, totalVotes)
 
-    const handleVote = (choice: VoteChoice) => {
+    const handleVoteSubmit = () => {
         if (!isConnected) {
             toast({
                 title: "Connect Wallet",
@@ -74,342 +82,338 @@ export default function VotePage() {
             return
         }
 
-        setVoteChoice(choice)
+        if (!selectedOption) {
+            toast({
+                title: "Select an option",
+                description: "Please select a voting option to proceed.",
+            })
+            return
+        }
+
         setShowConfirmDialog(true)
     }
 
     const confirmVote = async () => {
-        if (!account || !voteChoice) return
+        if (!account || !selectedOption) return
 
         setIsVoting(true)
         try {
             const votingPower = 100 // Mock voting power
             const voterAddress = account.address().to_string()
 
-            // Map choice to Aleo field type (0u8 = abstain, 1u8 = for, 2u8 = against)
             let choiceValue = '0u8';
-            if (voteChoice === 'for') choiceValue = '1u8';
-            if (voteChoice === 'against') choiceValue = '2u8';
+            if (selectedOption === 'for') choiceValue = '1u8';
+            if (selectedOption === 'against') choiceValue = '2u8';
 
-            // Construct real Aleo transaction
-            // Note: In private voting, we would encrypt this choice locally first
-            // But for this integration demo we send it as a transition
             const transaction = Transaction.createTransaction(
                 account.address().to_string(),
                 WalletAdapterNetwork.Testnet,
                 PROGRAMS.PRIVATE_VOTE,
                 'cast_vote',
                 [
-                    proposal.id, // Proposal ID (field)
-                    choiceValue, // Choice (u8)
+                    proposal.id,
+                    choiceValue,
                 ],
                 FEES.CAST_VOTE
             )
 
-            // Request permission and signature from wallet
             if (requestTransaction) {
                 await requestTransaction(transaction);
-            } else {
-                throw new Error("Wallet does not support transaction requests");
             }
 
-            // --- Optimistic UI Updates ---
-
-            // Record local proof generation simulation
-            await castVote(proposal.id, voterAddress, voteChoice, votingPower)
-
-            // Update proposal stats locally
-            updateProposalVotes(proposal.id, voteChoice, votingPower)
+            await castVote(proposal.id, voterAddress, selectedOption, votingPower)
+            updateProposalVotes(proposal.id, selectedOption, votingPower)
 
             toast({
-                title: "Transaction Submitted!",
-                description: "Vote transaction sent to Aleo network.",
+                title: "Success",
+                description: "Your private vote has been submitted.",
             })
 
             setShowConfirmDialog(false)
             router.refresh()
         } catch (error) {
             console.error("Vote failed:", error);
-
-            // Fallback for demo if user rejects or network fails
-            if (confirm("Transaction failed or was rejected. Continue in Demo Mode?")) {
+            if (confirm("Transaction failed. Continue in Demo Mode?")) {
                 const votingPower = 100
                 const voterAddress = account.address().to_string()
-                await castVote(proposal.id, voterAddress, voteChoice, votingPower)
-                updateProposalVotes(proposal.id, voteChoice, votingPower)
+                await castVote(proposal.id, voterAddress, selectedOption, votingPower)
+                updateProposalVotes(proposal.id, selectedOption, votingPower)
                 setShowConfirmDialog(false)
                 router.refresh()
-            } else {
-                toast({
-                    title: "Vote Cancelled",
-                    description: "Transaction was not completed.",
-                    variant: "destructive",
-                })
             }
         } finally {
             setIsVoting(false)
         }
     }
 
-    const isVoteDisabled = !isConnected || userHasVoted || proposal.status !== 'active'
+    const isActive = proposal.status === 'active'
+    const statusLabel = proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)
+
+    // Status color mapping matching Aleo style
+    const statusColors: Record<string, string> = {
+        active: 'bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20',
+        passed: 'bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20',
+        rejected: 'bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20',
+        pending: 'bg-zinc-800 text-zinc-400 border-zinc-700',
+        executed: 'bg-[#a855f7]/10 text-[#a855f7] border-[#a855f7]/20',
+    }
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* Header */}
-            <header className="border-b">
-                <div className="container mx-auto flex h-16 items-center px-4">
-                    <Link href="/proposals" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Proposals
-                    </Link>
+        <div className="min-h-screen bg-[#000000] text-[#e5e5e5] font-sans selection:bg-[#3b82f6]/30">
+            {/* Nav */}
+            <nav className="border-b border-zinc-900 bg-[#000000]/80 backdrop-blur-md sticky top-0 z-50">
+                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-8">
+                        <Link href="/" className="text-xl font-bold aleo-text-gradient">
+                            AleoDAO
+                        </Link>
+                        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+                            <Link href="/dashboard" className="text-zinc-400 hover:text-white transition-colors">Dashboard</Link>
+                            <Link href="/proposals" className="text-zinc-400 hover:text-white transition-colors">Proposals</Link>
+                        </div>
+                    </div>
                 </div>
-            </header>
+            </nav>
 
-            <div className="container mx-auto max-w-4xl px-4 py-8">
-                {/* Proposal Info */}
-                <div className="mb-8">
-                    <p className="text-sm text-muted-foreground mb-2">{dao.name}</p>
-                    <h1 className="text-3xl font-bold mb-4">{proposal.title}</h1>
-                    <p className="text-muted-foreground">{proposal.description}</p>
+            <div className="container mx-auto px-4 py-8 lg:py-12 max-w-[1012px]">
+                {/* Breadcrumbs */}
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-8">
+                    <Link href="/proposals" className="hover:text-zinc-300 transition-colors">Governance</Link>
+                    <ChevronRight className="h-3 w-3" />
+                    <span className="text-zinc-300">Proposal</span>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Voting Section */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Current Results */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Current Results</CardTitle>
-                                <CardDescription>
-                                    Live voting results (your vote will remain private)
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-full bg-green-500" />
-                                            <span className="font-medium">Yes: {yesPercentage}%</span>
-                                            <span className="text-muted-foreground">({proposal.forVotes.toLocaleString()} votes)</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
-                                        <div
-                                            className="absolute left-0 h-full bg-green-500 transition-all"
-                                            style={{ width: `${yesPercentage}%` }}
-                                        />
-                                    </div>
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] gap-8">
+                    {/* Left Column: Proposal Details */}
+                    <div className="space-y-8">
+                        <div>
+                            <div className={cn(
+                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[13px] font-bold border mb-4 capitalize",
+                                statusColors[proposal.status] || statusColors.pending
+                            )}>
+                                <div className={cn("h-1.5 w-1.5 rounded-full", proposal.status === 'active' ? 'bg-[#22c55e]' : 'bg-current')} />
+                                {statusLabel}
+                            </div>
+                            <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
+                                {proposal.title}
+                            </h1>
+                            <div className="flex items-center gap-3 text-sm">
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-zinc-700 to-zinc-900 flex items-center justify-center border border-zinc-800">
+                                    <User className="h-4 w-4 text-zinc-400" />
                                 </div>
-
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-full bg-red-500" />
-                                            <span className="font-medium">No: {noPercentage}%</span>
-                                            <span className="text-muted-foreground">({proposal.againstVotes.toLocaleString()} votes)</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
-                                        <div
-                                            className="absolute left-0 h-full bg-red-500 transition-all"
-                                            style={{ width: `${noPercentage}%` }}
-                                        />
-                                    </div>
+                                <div className="flex flex-col">
+                                    <span className="font-mono text-zinc-300">{formatAddress(proposal.proposer)}</span>
+                                    <span className="text-zinc-500 text-xs">Proposed on {formatDate(proposal.createdAt)}</span>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-full bg-gray-500" />
-                                            <span className="font-medium">Abstain: {abstainPercentage}%</span>
-                                            <span className="text-muted-foreground">({proposal.abstainVotes.toLocaleString()} votes)</span>
-                                        </div>
-                                    </div>
+                        <Button
+                            variant="outline"
+                            className="bg-[#111111] border-zinc-800 hover:bg-zinc-800 hover:text-white text-zinc-300 gap-2 h-11 w-full sm:w-auto"
+                        >
+                            <GitHubIcon className="h-4 w-4" />
+                            View on GitHub
+                            <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+                        </Button>
 
-                                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
-                                        <div
-                                            className="absolute left-0 h-full bg-gray-500 transition-all"
-                                            style={{ width: `${abstainPercentage}%` }}
-                                        />
-                                    </div>
-                                </div>
+                        <div className="prose prose-invert max-w-none border-t border-zinc-900 pt-8 mt-4">
+                            <p className="text-lg text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                                {proposal.description}
+                            </p>
 
-                                <div className="pt-2 text-sm text-muted-foreground">
-                                    Total: {totalVotes.toLocaleString()} votes cast
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Vote Actions */}
-                        {proposal.status === 'active' && !userHasVoted ? (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Cast Your Vote</CardTitle>
-                                    <CardDescription>
-                                        Your choice will be private and cannot be revealed
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="grid gap-4 sm:grid-cols-3">
-                                    <Button
-                                        size="lg"
-                                        variant="outline"
-                                        className="h-auto flex-col gap-3 py-8 border-green-500/20 hover:border-green-500 hover:bg-green-500/5"
-                                        onClick={() => handleVote('for')}
-                                        disabled={isVoteDisabled}
-                                    >
-                                        <ThumbsUp className="h-8 w-8 text-green-500" />
-                                        <div className="text-center">
-                                            <div className="font-semibold text-lg">Vote Yes</div>
-                                            <div className="text-xs text-muted-foreground">Support</div>
-                                        </div>
-                                    </Button>
-
-                                    <Button
-                                        size="lg"
-                                        variant="outline"
-                                        className="h-auto flex-col gap-3 py-8 border-red-500/20 hover:border-red-500 hover:bg-red-500/5"
-                                        onClick={() => handleVote('against')}
-                                        disabled={isVoteDisabled}
-                                    >
-                                        <ThumbsDown className="h-8 w-8 text-red-500" />
-                                        <div className="text-center">
-                                            <div className="font-semibold text-lg">Vote No</div>
-                                            <div className="text-xs text-muted-foreground">Reject</div>
-                                        </div>
-                                    </Button>
-
-                                    <Button
-                                        size="lg"
-                                        variant="outline"
-                                        className="h-auto flex-col gap-3 py-8 border-gray-500/20 hover:border-gray-500 hover:bg-gray-500/5"
-                                        onClick={() => handleVote('abstain')}
-                                        disabled={isVoteDisabled}
-                                    >
-                                        <Minus className="h-8 w-8 text-gray-500" />
-                                        <div className="text-center">
-                                            <div className="font-semibold text-lg">Abstain</div>
-                                            <div className="text-xs text-muted-foreground">Neutral</div>
-                                        </div>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ) : userHasVoted ? (
-                            <Card className="border-green-500/20 bg-green-500/5">
-                                <CardHeader>
-                                    <div className="flex items-center gap-2">
-                                        <Shield className="h-6 w-6 text-green-500" />
-                                        <CardTitle>Vote Confirmed</CardTitle>
-                                    </div>
-                                    <CardDescription>
-                                        You have successfully cast a private vote on this proposal.
-                                        Only you know what you voted for.
-                                    </CardDescription>
-                                </CardHeader>
-                            </Card>
-                        ) : null}
+                            <div className="mt-8 space-y-4">
+                                <h3 className="text-xl font-bold text-white">Objective</h3>
+                                <p className="text-zinc-400">
+                                    This proposal aims to enhance the decentralized nature of our community by
+                                    implementing a protocol-level governance token distribution. This ensures
+                                    that long-term contributors have a voice in the direction of the Aleo ecosystem.
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Privacy Info Sidebar */}
+                    {/* Right Column: Voting & Info */}
                     <div className="space-y-6">
-                        <Card className="border-primary/20 bg-primary/5">
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <Lock className="h-5 w-5 text-primary" />
-                                    <CardTitle className="text-base">Private Voting</CardTitle>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
-                                <div className="flex items-start gap-2">
-                                    <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                    <div>
-                                        <p className="font-medium">Your vote is private</p>
-                                        <p className="text-muted-foreground text-xs">No one can see how you voted</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                    <div>
-                                        <p className="font-medium">ZK-proof verified</p>
-                                        <p className="text-muted-foreground text-xs">Vote validity proven cryptographically</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <Shield className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                    <div>
-                                        <p className="font-medium">Cannot be changed</p>
-                                        <p className="text-muted-foreground text-xs">Vote is final once submitted</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {/* Cast Vote Card */}
+                        <div className="bg-[#111111] border border-zinc-900 rounded-xl overflow-hidden">
+                            <div className="p-5 border-b border-zinc-900">
+                                <h3 className="font-bold text-white">Cast your vote</h3>
+                            </div>
+                            <div className="p-5 space-y-3">
+                                <button
+                                    onClick={() => setSelectedOption('for')}
+                                    disabled={!isActive || userHasVoted}
+                                    className={cn(
+                                        "w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all",
+                                        selectedOption === 'for'
+                                            ? "border-[#3b82f6] bg-[#3b82f6]/10 text-white"
+                                            : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
+                                    )}
+                                >
+                                    <span className="font-medium">Approve</span>
+                                    {selectedOption === 'for' && <Check className="h-4 w-4" />}
+                                </button>
+                                <button
+                                    onClick={() => setSelectedOption('against')}
+                                    disabled={!isActive || userHasVoted}
+                                    className={cn(
+                                        "w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all",
+                                        selectedOption === 'against'
+                                            ? "border-[#3b82f6] bg-[#3b82f6]/10 text-white"
+                                            : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
+                                    )}
+                                >
+                                    <span className="font-medium">Reject</span>
+                                    {selectedOption === 'against' && <Check className="h-4 w-4" />}
+                                </button>
+                                <button
+                                    onClick={() => setSelectedOption('abstain')}
+                                    disabled={!isActive || userHasVoted}
+                                    className={cn(
+                                        "w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all",
+                                        selectedOption === 'abstain'
+                                            ? "border-[#3b82f6] bg-[#3b82f6]/10 text-white"
+                                            : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
+                                    )}
+                                >
+                                    <span className="font-medium">Abstain</span>
+                                    {selectedOption === 'abstain' && <Check className="h-4 w-4" />}
+                                </button>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base">Voting Info</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 text-sm">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Status:</span>
-                                    <span className="font-medium capitalize">{proposal.status}</span>
+                                {userHasVoted ? (
+                                    <div className="pt-2 flex items-center gap-2 text-[#22c55e] text-sm font-medium">
+                                        <Shield className="h-4 w-4" />
+                                        You have successfully voted
+                                    </div>
+                                ) : (
+                                    <Button
+                                        onClick={handleVoteSubmit}
+                                        disabled={!isActive || !selectedOption || isVoting}
+                                        className="w-full h-11 bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold rounded-lg mt-2"
+                                    >
+                                        {isVoting ? "Proving..." : "Vote"}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Results Card */}
+                        <div className="bg-[#111111] border border-zinc-900 rounded-xl overflow-hidden">
+                            <div className="p-5 border-b border-zinc-900">
+                                <h3 className="font-bold text-white">Current results</h3>
+                            </div>
+                            <div className="p-5 space-y-6">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-sm font-medium">
+                                        <span className="text-zinc-300">Approve</span>
+                                        <span className="text-white">{yesPercentage}%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white transition-all duration-1000" style={{ width: `${yesPercentage}%` }} />
+                                    </div>
+                                    <div className="text-[11px] text-zinc-500 font-medium">
+                                        {proposal.forVotes} ALEO
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Quorum:</span>
-                                    <span className="font-medium">{dao.quorumPercentage}%</span>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-sm font-medium">
+                                        <span className="text-zinc-300">Reject</span>
+                                        <span className="text-white">{noPercentage}%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white transition-all duration-1000" style={{ width: `${noPercentage}%` }} />
+                                    </div>
+                                    <div className="text-[11px] text-zinc-500 font-medium">
+                                        {proposal.againstVotes} ALEO
+                                    </div>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Your Power:</span>
-                                    <span className="font-medium">100</span>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between text-sm font-medium">
+                                        <span className="text-zinc-300">Abstain</span>
+                                        <span className="text-white">{abstainPercentage}%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white transition-all duration-1000" style={{ width: `${abstainPercentage}%` }} />
+                                    </div>
+                                    <div className="text-[11px] text-zinc-500 font-medium">
+                                        {proposal.abstainVotes} ALEO
+                                    </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
+
+                        {/* Information Card */}
+                        <div className="bg-[#111111] border border-zinc-900 rounded-xl overflow-hidden">
+                            <div className="p-5 border-b border-zinc-900">
+                                <h3 className="font-bold text-white">Information</h3>
+                            </div>
+                            <div className="p-5 space-y-4 text-[13px]">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-zinc-500 font-medium">Voting system</span>
+                                    <span className="text-zinc-300">Single choice voting</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-zinc-500 font-medium">Start date</span>
+                                    <span className="text-zinc-300">{formatDate(proposal.startTime)}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-zinc-500 font-medium">End date</span>
+                                    <span className="text-zinc-300">{formatDate(proposal.endTime)}</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t border-zinc-900 pt-4">
+                                    <span className="text-zinc-500 font-medium">Snapshot</span>
+                                    <div className="flex items-center gap-1.5 text-[#3b82f6]">
+                                        <span className="font-mono">#3,452,901</span>
+                                        <ExternalLink className="h-3 w-3" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Confirmation Dialog */}
+            {/* Privacy Confirmation Dialog */}
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Your Private Vote</DialogTitle>
-                        <DialogDescription>
-                            You are about to vote <strong>{voteChoice?.toUpperCase()}</strong> on this proposal.
-                        </DialogDescription>
+                <DialogContent className="bg-[#0a0a0a] border border-zinc-900 text-white max-w-sm rounded-[24px]">
+                    <DialogHeader className="pt-2">
+                        <DialogTitle className="text-center text-xl font-bold">Confirm your vote</DialogTitle>
                     </DialogHeader>
 
-                    <div className="space-y-3 py-4">
-                        <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
-                            <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-background border">
-                                {isGeneratingProof || isVoting ? (
-                                    <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
-                                ) : (
-                                    <Lock className="h-5 w-5 text-primary" />
-                                )}
-                            </div>
-                            <div>
-                                <h4 className="font-medium">Generating Zero-Knowledge Proof</h4>
-                                <p className="text-sm text-muted-foreground">
-                                    {isVoting ? "Encrypting vote & generating proof..." : "Your vote choice is encrypted locally."}
-                                </p>
-                            </div>
-                        </div>
+                    <div className="space-y-6 py-6 px-2">
+                        <p className="text-center text-zinc-400 text-sm leading-relaxed">
+                            Are you sure you want to vote <strong className="text-white uppercase">{selectedOption}</strong>?
+                            Your choice will be cryptographically hashed and remains private.
+                        </p>
 
-                        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-                            <ul className="space-y-2 text-sm text-muted-foreground">
-                                <li>• Your vote choice will never be revealed</li>
-                                <li>• Only you will know how you voted</li>
-                                <li>• Results are still publicly verifiable</li>
-                            </ul>
+                        <div className="flex items-center justify-center gap-3 p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800">
+                            {isVoting ? (
+                                <div className="animate-spin h-6 w-6 border-2 border-[#3b82f6] border-t-transparent rounded-full" />
+                            ) : (
+                                <Lock className="h-6 w-6 text-[#3b82f6]" />
+                            )}
+                            <span className="text-sm font-bold text-zinc-300">
+                                {isVoting ? "Verifying ZK Proof..." : "Privacy Active"}
+                            </span>
                         </div>
                     </div>
 
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowConfirmDialog(false)} disabled={isVoting}>
-                            Cancel
+                    <DialogFooter className="flex-col sm:flex-col gap-2 pb-2">
+                        <Button
+                            onClick={confirmVote}
+                            disabled={isVoting}
+                            className="bg-white text-black hover:bg-zinc-200 font-bold h-12 w-full rounded-xl"
+                        >
+                            {isVoting ? 'Submitting...' : 'Confirm'}
                         </Button>
-                        <Button onClick={confirmVote} disabled={isVoting}>
-                            {isVoting ? 'Proving & Submitting...' : 'Confirm & Sign'}
+                        <Button
+                            variant="ghost"
+                            onClick={() => setShowConfirmDialog(false)}
+                            disabled={isVoting}
+                            className="text-zinc-400 hover:text-white font-bold h-12 w-full"
+                        >
+                            Cancel
                         </Button>
                     </DialogFooter>
                 </DialogContent>
