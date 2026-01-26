@@ -1,7 +1,7 @@
 'use client'
 
 import { create } from 'zustand'
-// import { Account } from '@provable/sdk'
+
 
 // Mock Account for demo/UI purposes
 class MockAccount {
