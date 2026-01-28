@@ -1,7 +1,7 @@
 // DAO Registry Contract
 // Handles DAO creation, member registration, and settings management
 
-program dao_registry.aleo {
+program ad_registry_5821.aleo {
     // DAO structure containing core settings
     struct DAO {
         id: field,              // Unique DAO identifier
@@ -30,56 +30,58 @@ program dao_registry.aleo {
     mapping dao_settings: field => field;
 
     // Create a new DAO
-    // Returns a DAO struct that gets stored in public mapping
-    transition create_dao(
-        public name_hash: field,           // Hash of DAO name
-        public voting_period: u32,         // Voting duration (e.g., 100800 blocks ≈ 7 days)
-        public quorum: u32,                // Quorum percentage (e.g., 5000 = 50%)
-        public proposal_threshold: u64     // Min tokens to create proposal
-    ) -> DAO {
-        // Generate unique DAO ID from name and creator
+    // Returns a Future that resolves when the DAO is stored on-chain
+    async transition create_dao(
+        public name_hash: field,
+        public voting_period: u32,
+        public quorum: u32,
+        public proposal_threshold: u64
+    ) -> Future {
         let dao_id: field = BHP256::hash_to_field(name_hash);
         
-        // Create DAO struct
+        return finalize_create_dao(dao_id, self.caller, voting_period, quorum, proposal_threshold);
+    }
+
+    async function finalize_create_dao(
+        dao_id: field,
+        creator: address,
+        voting_period: u32,
+        quorum: u32,
+        proposal_threshold: u64
+    ) {
+        assert(!daos.contains(dao_id));
+        
         let new_dao: DAO = DAO {
             id: dao_id,
-            creator: self.caller,
+            creator: creator,
             voting_period: voting_period,
             quorum: quorum,
             proposal_threshold: proposal_threshold,
             created_at: block.height,
         };
-
-        return new_dao then finalize(dao_id, new_dao);
-    }
-
-    finalize create_dao(dao_id: field, dao: DAO) {
-        // Ensure DAO doesn't already exist
-        assert(!daos.contains(dao_id));
         
-        // Register DAO
-        daos.set(dao_id, dao);
+        daos.set(dao_id, new_dao);
         member_count.set(dao_id, 0u32);
     }
 
     // Register as a member of a DAO (private)
-    // Returns a private Member record
-    transition register_member(
+    // Returns a private Member record and a Future
+    async transition register_member(
         public dao_id: field,
         public initial_voting_power: u64
-    ) -> Member {
+    ) -> (Member, Future) {
         // Create private member record
         let member: Member = Member {
             owner: self.caller,
             dao_id: dao_id,
-            joined_at: block.height,
+            joined_at: 0u32, // block.height unavailable in async transition
             voting_power: initial_voting_power,
         };
 
-        return member then finalize(dao_id);
+        return (member, finalize_register_member(dao_id));
     }
 
-    finalize register_member(dao_id: field) {
+    async function finalize_register_member(dao_id: field) {
         // Verify DAO exists
         assert(daos.contains(dao_id));
         
@@ -89,17 +91,17 @@ program dao_registry.aleo {
     }
 
     // Update DAO settings (only creator can update)
-    transition update_dao_settings(
+    async transition update_dao_settings(
         public dao_id: field,
         public new_voting_period: u32,
         public new_quorum: u32,
         public new_proposal_threshold: u64
-    ) -> DAO {
+    ) -> Future {
         // Retrieve and update DAO
-        return then finalize(dao_id, self.caller, new_voting_period, new_quorum, new_proposal_threshold);
+        return finalize_update_dao_settings(dao_id, self.caller, new_voting_period, new_quorum, new_proposal_threshold);
     }
 
-    finalize update_dao_settings(
+    async function finalize_update_dao_settings(
         dao_id: field,
         caller: address,
         new_voting_period: u32,
@@ -126,7 +128,9 @@ program dao_registry.aleo {
     }
 
     // Get member voting power (helper function)
-    // In production, this would verify token balance from a token contract
+    // This stays as a regular transition because it reads no state and writes no state?
+    // Actually, transition CAN read state? No, only finalize reads state.
+    // This helper was processing a record. It doesn't need to be async if it doesn't touch mappings.
     transition verify_voting_power(
         member_record: Member,
         public dao_id: field

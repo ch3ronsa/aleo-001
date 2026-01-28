@@ -38,7 +38,7 @@ export default function HomePage() {
                         <p className="mb-10 text-lg text-zinc-400 sm:text-xl max-w-2xl mx-auto leading-relaxed">
                             Protecting the two most critical assets in decentralized communication:
                             <strong> Your Choice</strong> and <strong>Your Wealth</strong>.
-                            Built on Aleo's ZK-architecture.
+                            The complete 3-in-1 privacy platform built on Aleo's ZK-architecture.
                         </p>
 
                         <div className="flex flex-col gap-4 sm:flex-row sm:justify-center items-center">
@@ -58,14 +58,17 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* The 4 Core Pillars */}
+            {/* The 3 Core Features */}
             <section className="container mx-auto px-4 py-24 sm:px-6 lg:px-8 border-b border-zinc-900">
                 <div className="mb-20 text-center">
-                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#3b82f6] mb-4">Core Capabilities</h2>
-                    <h3 className="text-4xl font-bold text-white mb-6">Four Pillars of Confidentiality</h3>
+                    <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#3b82f6] mb-4">3-in-1 DAO System</h2>
+                    <h3 className="text-4xl font-bold text-white mb-6">Three Core Privacy Features</h3>
+                    <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+                        Everything you need for privacy-first governance in one unified platform
+                    </p>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-2 max-w-6xl mx-auto">
+                <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
                     {/* 1. Anonymous Voting */}
                     <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
                         <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#3b82f6]/10 blur-3xl rounded-full group-hover:bg-[#3b82f6]/20 transition-all" />
@@ -73,10 +76,13 @@ export default function HomePage() {
                             <Lock className="h-7 w-7 text-[#3b82f6]" />
                         </div>
                         <h4 className="text-2xl font-bold mb-4">Anonymous Voting</h4>
-                        <p className="text-zinc-500 leading-relaxed">
+                        <p className="text-zinc-500 leading-relaxed mb-4">
                             Your ballot choice is encrypted locally. Only a ZK-proof of validity is submitted on-chain,
                             ensuring zero coercion and total democratic freedom.
                         </p>
+                        <Link href="/proposals" className="text-[#3b82f6] hover:text-[#2563eb] text-sm font-semibold inline-flex items-center">
+                            Vote on Proposals <ChevronRight className="h-4 w-4 ml-1" />
+                        </Link>
                     </div>
 
                     {/* 2. Private DAOs */}
@@ -86,36 +92,29 @@ export default function HomePage() {
                             <Shield className="h-7 w-7 text-[#22c55e]" />
                         </div>
                         <h4 className="text-2xl font-bold mb-4">Private DAOs</h4>
-                        <p className="text-zinc-500 leading-relaxed">
+                        <p className="text-zinc-500 leading-relaxed mb-4">
                             Governance where member holdings and voting power remain 100% confidential.
                             Participate securely without exposing your personal wealth.
                         </p>
+                        <Link href="/dashboard" className="text-[#22c55e] hover:text-[#16a34a] text-sm font-semibold inline-flex items-center">
+                            Explore DAOs <ChevronRight className="h-4 w-4 ml-1" />
+                        </Link>
                     </div>
 
-                    {/* 3. Whistleblower Protection */}
-                    <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
-                        <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#ef4444]/10 blur-3xl rounded-full group-hover:bg-[#ef4444]/20 transition-all" />
-                        <div className="h-14 w-14 bg-[#ef4444]/10 rounded-2xl flex items-center justify-center mb-6 border border-[#ef4444]/20">
-                            <MessageSquare className="h-7 w-7 text-[#ef4444]" />
-                        </div>
-                        <h4 className="text-2xl font-bold mb-4">Whistleblower Systems</h4>
-                        <p className="text-zinc-500 leading-relaxed">
-                            Safely report and signal critical issues. Our ZK-infrastructure provides
-                            absolute cryptographic protection for disclosures within any organization.
-                        </p>
-                    </div>
-
-                    {/* 4. Private Polls & Surveys */}
+                    {/* 3. Private Polls & Surveys */}
                     <div className="p-8 rounded-[32px] bg-gradient-to-br from-[#0a0a0a] to-black border border-zinc-900 relative overflow-hidden group">
                         <div className="absolute -right-8 -top-8 h-32 w-32 bg-[#a855f7]/10 blur-3xl rounded-full group-hover:bg-[#a855f7]/20 transition-all" />
                         <div className="h-14 w-14 bg-[#a855f7]/10 rounded-2xl flex items-center justify-center mb-6 border border-[#a855f7]/20">
                             <BarChart3 className="h-7 w-7 text-[#a855f7]" />
                         </div>
                         <h4 className="text-2xl font-bold mb-4">Private Polls & Surveys</h4>
-                        <p className="text-zinc-500 leading-relaxed">
-                            Gather honest, unbiased data from your community without the pressure of
-                            surveillance. Perfect for sensitive opinions and consensus gathering.
+                        <p className="text-zinc-500 leading-relaxed mb-4">
+                            Multi-choice polls with ZK-proof privacy. Gather honest, unbiased opinions
+                            without surveillance. Perfect for community sentiment and consensus building.
                         </p>
+                        <Link href="/polls" className="text-[#a855f7] hover:text-[#9333ea] text-sm font-semibold inline-flex items-center">
+                            Browse Polls <ChevronRight className="h-4 w-4 ml-1" />
+                        </Link>
                     </div>
                 </div>
             </section>

@@ -1,10 +1,18 @@
 {
-    "program": "private_vote.aleo",
+    "program": "ad_vote_5821.aleo",
     "version": "0.0.0",
     "description": "Private voting mechanism using zero-knowledge proofs",
     "license": "MIT",
-    "dependencies": {
-        "dao_registry.aleo": "*",
-        "proposal.aleo": "*"
-    }
+    "dependencies": [
+        {
+            "name": "ad_registry_5821.aleo",
+            "location": "local",
+            "path": "../dao_registry"
+        },
+        {
+            "name": "ad_proposal_5821.aleo",
+            "location": "local",
+            "path": "../proposal"
+        }
+    ]
 }

@@ -1,12 +1,11 @@
-// Private Vote Contract
 // Enables anonymous voting using ZK-proofs while maintaining verifiable results
 
-program private_vote.aleo {
-    // Import the proposal program to update vote tallies
-    import proposal.aleo;
+import ad_registry_5821.aleo;
+
+program ad_vote_5821.aleo {
 
     // Private vote record - keeps voter choice secret
-    record Vote {
+    record PrivateVote {
         owner: address,         // Voter address
         proposal_id: field,     // Which proposal
         vote_choice: bool,      // true = yes, false = no (private!)
@@ -30,39 +29,33 @@ program private_vote.aleo {
 
     // Cast a private vote
     // Takes a Member record from dao_registry to prove voting power
-    // Returns a private Vote record and public VoteReceipt
-    transition cast_vote(
-        member_record: dao_registry.aleo/Member,  // Proves membership and voting power
+    // Returns a private Vote record, public VoteReceipt, and Future
+    async transition cast_vote(
+        member_record: ad_registry_5821.aleo/Member,  // Proves membership and voting power
         public proposal_id: field,
         private vote_choice: bool  // true = yes, false = no
-    ) -> (dao_registry.aleo/Member, Vote, VoteReceipt) {
+    ) -> (ad_registry_5821.aleo/Member, PrivateVote, VoteReceipt, Future) {
         // Create private vote record
-        let vote: Vote = Vote {
+        let vote: PrivateVote = PrivateVote {
             owner: self.caller,
             proposal_id: proposal_id,
             vote_choice: vote_choice,
             voting_power: member_record.voting_power,
-            voted_at: block.height,
+            voted_at: 0u32,
         };
 
         // Create public receipt (proof of voting without revealing choice)
         let receipt: VoteReceipt = VoteReceipt {
             owner: self.caller,
             proposal_id: proposal_id,
-            voted_at: block.height,
+            voted_at: 0u32,
         };
 
-        // Return member record (unchanged), vote, and receipt
-        return (member_record, vote, receipt) then finalize(
-            proposal_id,
-            self.caller,
-            member_record.dao_id,
-            vote_choice,
-            member_record.voting_power
-        );
+        // Return member record (unchanged), vote, receipt, and async call
+        return (member_record, vote, receipt, finalize_cast_vote(proposal_id, self.caller, member_record.dao_id, vote_choice, member_record.voting_power));
     }
 
-    finalize cast_vote(
+    async function finalize_cast_vote(
         proposal_id: field,
         voter: address,
         dao_id: field,
@@ -96,58 +89,16 @@ program private_vote.aleo {
     }
 
     // Verify eligibility without revealing token balance
-    // This is a helper function to check if someone can vote
     transition verify_eligibility(
-        member_record: dao_registry.aleo/Member,
+        member_record: ad_registry_5821.aleo/Member,
         public proposal_id: field,
         public minimum_power: u64
-    ) -> (dao_registry.aleo/Member, bool) {
+    ) -> (ad_registry_5821.aleo/Member, bool) {
         // Check if member has enough voting power
         let is_eligible: bool = member_record.voting_power >= minimum_power;
         
         return (member_record, is_eligible);
     }
 
-    // Reveal vote tally for finalized proposals
-    // This can only be called after voting ends
-    transition reveal_tally(public proposal_id: field) -> (u64, u64) {
-        return then finalize(proposal_id);
-    }
 
-    finalize reveal_tally(proposal_id: field) -> (u64, u64) {
-        // Get encoded tally
-        let encoded_tally: field = vote_tallies.get(proposal_id);
-        
-        // Decode yes and no votes
-        // This is simplified - production would use proper ZK reveal
-        let yes_votes: u64 = (encoded_tally / 1000000field) as u64;
-        let no_votes: u64 = (encoded_tally % 1000000field) as u64;
-        
-        return (yes_votes, no_votes);
-    }
-
-    // Batch vote reveal for multiple proposals
-    transition batch_reveal(
-        public proposal_id_1: field,
-        public proposal_id_2: field
-    ) -> ((u64, u64), (u64, u64)) {
-        return then finalize(proposal_id_1, proposal_id_2);
-    }
-
-    finalize batch_reveal(
-        proposal_id_1: field,
-        proposal_id_2: field
-    ) -> ((u64, u64), (u64, u64)) {
-        // Reveal first proposal
-        let tally_1: field = vote_tallies.get(proposal_id_1);
-        let yes_1: u64 = (tally_1 / 1000000field) as u64;
-        let no_1: u64 = (tally_1 % 1000000field) as u64;
-        
-        // Reveal second proposal
-        let tally_2: field = vote_tallies.get(proposal_id_2);
-        let yes_2: u64 = (tally_2 / 1000000field) as u64;
-        let no_2: u64 = (tally_2 % 1000000field) as u64;
-        
-        return ((yes_1, no_1), (yes_2, no_2));
-    }
 }

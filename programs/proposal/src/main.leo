@@ -1,7 +1,7 @@
 // Proposal Contract
 // Manages proposal creation, lifecycle, and status
 
-program proposal.aleo {
+program ad_proposal_5821.aleo {
     // Proposal status enumeration
     // 0 = Pending, 1 = Active, 2 = Succeeded, 3 = Failed, 4 = Executed
     
@@ -39,42 +39,50 @@ program proposal.aleo {
     mapping proposal_status: field => u8;
 
     // Create a new proposal
-    transition create_proposal(
+    async transition create_proposal(
         public dao_id: field,
         public title_hash: field,
         public description_hash: field,
-        public voting_start_delay: u32,  // Blocks until voting starts
-        public voting_duration: u32      // Duration of voting period
-    ) -> Proposal {
+        public voting_start_delay: u32,
+        public voting_duration: u32
+    ) -> Future {
+        // Generate unique proposal ID
+        let proposal_id: field = BHP256::hash_to_field(title_hash);
+
+        return finalize_create_proposal(dao_id, proposal_id, self.caller, title_hash, description_hash, voting_start_delay, voting_duration);
+    }
+
+    async function finalize_create_proposal(
+        dao_id: field,
+        proposal_id: field,
+        proposer: address,
+        title_hash: field,
+        description_hash: field,
+        voting_start_delay: u32,
+        voting_duration: u32
+    ) {
         // Calculate voting period
         let voting_start: u32 = block.height + voting_start_delay;
         let voting_end: u32 = voting_start + voting_duration;
+        let created_at: u32 = block.height;
+
+        // Ensure proposal doesn't already exist
+        assert(!proposals.contains(proposal_id));
         
-        // Generate unique proposal ID
-        let proposal_id: field = BHP256::hash_to_field(title_hash);
-        
-        // Create proposal struct
         let new_proposal: Proposal = Proposal {
             id: proposal_id,
             dao_id: dao_id,
-            proposer: self.caller,
+            proposer: proposer,
             title_hash: title_hash,
             description_hash: description_hash,
             voting_start: voting_start,
             voting_end: voting_end,
             status: 0u8,  // Pending
-            created_at: block.height,
+            created_at: created_at,
         };
-
-        return new_proposal then finalize(dao_id, proposal_id, new_proposal);
-    }
-
-    finalize create_proposal(dao_id: field, proposal_id: field, proposal: Proposal) {
-        // Ensure proposal doesn't already exist
-        assert(!proposals.contains(proposal_id));
         
         // Register proposal
-        proposals.set(proposal_id, proposal);
+        proposals.set(proposal_id, new_proposal);
         proposal_status.set(proposal_id, 0u8);  // Pending
         
         // Initialize vote tally
@@ -92,11 +100,11 @@ program proposal.aleo {
     }
 
     // Activate proposal (moves from Pending to Active)
-    transition activate_proposal(public proposal_id: field) {
-        return then finalize(proposal_id);
+    async transition activate_proposal(public proposal_id: field) -> Future {
+        return finalize_activate_proposal(proposal_id);
     }
 
-    finalize activate_proposal(proposal_id: field) {
+    async function finalize_activate_proposal(proposal_id: field) {
         // Get proposal
         let proposal: Proposal = proposals.get(proposal_id);
         
@@ -112,14 +120,14 @@ program proposal.aleo {
     }
 
     // Finalize proposal (called after voting ends)
-    transition finalize_proposal(
+    async transition finalize_proposal(
         public proposal_id: field,
         public quorum: u32  // Required quorum from DAO settings
-    ) {
-        return then finalize(proposal_id, quorum);
+    ) -> Future {
+        return finalize_finalize_proposal(proposal_id, quorum);
     }
 
-    finalize finalize_proposal(proposal_id: field, quorum: u32) {
+    async function finalize_finalize_proposal(proposal_id: field, quorum: u32) {
         // Get proposal
         let proposal: Proposal = proposals.get(proposal_id);
         
@@ -130,25 +138,21 @@ program proposal.aleo {
         let tally: VoteTally = vote_tallies.get(proposal_id);
         
         // Calculate if quorum met and proposal succeeded
-        // Note: In production, we'd get total possible votes from DAO
         let yes_percentage: u64 = (tally.yes_votes * 10000u64) / (tally.yes_votes + tally.no_votes);
-        let quorum_met: bool = tally.total_votes > 0u64;  // Simplified quorum check
+        let quorum_met: bool = tally.total_votes > 0u64;
         
-        // Determine final status
-        let final_status: u8 = 3u8;  // Failed by default
-        if quorum_met && yes_percentage >= 5000u64 {  // 50% threshold
-            final_status = 2u8;  // Succeeded
-        }
+        // Determine final status using ternary to avoid reassignment
+        let final_status: u8 = (quorum_met && yes_percentage >= 5000u64) ? 2u8 : 3u8;
         
         proposal_status.set(proposal_id, final_status);
     }
 
     // Mark proposal as executed
-    transition mark_executed(public proposal_id: field) {
-        return then finalize(proposal_id, self.caller);
+    async transition mark_executed(public proposal_id: field) -> Future {
+        return finalize_mark_executed(proposal_id, self.caller);
     }
 
-    finalize mark_executed(proposal_id: field, caller: address) {
+    async function finalize_mark_executed(proposal_id: field, caller: address) {
         // Get proposal
         let proposal: Proposal = proposals.get(proposal_id);
         
@@ -163,8 +167,4 @@ program proposal.aleo {
         proposal_status.set(proposal_id, 4u8);
     }
 
-    // Get proposal status (helper)
-    inline get_status(proposal_id: field) -> u8 {
-        return proposal_status.get(proposal_id);
-    }
 }

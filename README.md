@@ -42,16 +42,72 @@ AleoDAO transforms traditional transparent communication into a secure, private 
 - **Blockchain**: Built natively on **Aleo Testnet**.
 - **Wallet**: Real-world integration with **Leo Wallet** for secure transaction signing.
 - **UI Architecture**: High-fidelity frontend matching the official `vote.aleo.org` (ARC-0009) aesthetic.
-- **Privacy Model**: Fully decentralized ZK-proving (no central 서버 or relayers needed).
+- **Privacy Model**: Fully decentralized ZK-proving (no central server or relayers needed).
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Live Demo & Deployed Contracts
 
-1. **Install Leo Wallet**: Download the extension to participate in private governance.
-2. **Explore Proposals**: Browse active ballots on the [Home Page](https://aleodao.vercel.app).
-3. **Cast Your Vote**: Experience the ZK-proving flow with a single click.
+### Frontend
+- **Live Demo**: [https://aleodao.vercel.app](https://aleodao.vercel.app)
+
+### Deployed Contracts (Aleo Testnet)
+> **Note**: Update these after deployment via `leo deploy --network testnet`
+
+| Contract | Program ID | Status |
+|----------|------------|--------|
+| DAO Registry | `dao_registry_XXXXX.aleo` | 🟡 Pending |
+| Proposal | `proposal_XXXXX.aleo` | 🟡 Pending |
+| Private Vote | `private_vote_XXXXX.aleo` | 🟡 Pending |
 
 ---
 
-**Built with ❤️ for the Aleo Hackathon**
+## 🛠️ Development Setup
+
+### Prerequisites
+- Node.js 18+
+- Leo CLI (via WSL on Windows)
+- Leo Wallet browser extension
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+### Smart Contracts
+```bash
+# Install Leo (in WSL)
+curl -L https://raw.githubusercontent.com/ProvableHQ/leo/mainnet/install.sh | bash
+
+# Build contracts
+cd programs/dao_registry
+leo build
+
+# Deploy to testnet
+leo deploy --network testnet
+```
+
+---
+
+## 👥 Team
+
+| Name | Role | Discord | Wallet |
+|------|------|---------|--------|
+| [Your Name] | Lead Developer | [Discord Handle] | `aleo1...` |
+
+---
+
+## 📄 Documentation
+
+- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
+- [Project Structure](./PROJECT_STRUCTURE.md)
+- [Submission Details](./SUBMISSION.md)
+- [Quick Start Guide](./QUICKSTART.md)
+
+---
+
+**Built with ❤️ for the Aleo Buildathon**
+
