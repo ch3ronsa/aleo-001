@@ -28,7 +28,14 @@ export function ConnectWallet() {
     if (!publicKey) {
         return (
             <Button
-                onClick={handleConnect}
+                onClick={() => {
+                    try {
+                        // Force selection of Leo Wallet as it's our primary supported wallet
+                        select('Leo Wallet' as WalletName);
+                    } catch (e) {
+                        console.error("Failed to connect wallet:", e);
+                    }
+                }}
                 className="gap-2"
             >
                 <Wallet className="h-4 w-4" />
