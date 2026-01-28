@@ -1,0 +1,4 @@
+ 
+BASLANGIC ZAMANI: Per 29.01.2026  0:19:32,81 
+---------------------------------------------------- 
+[LOG] DAO Registry baslatildi... 

@@ -141,4 +141,27 @@ program ad_registry_5821.aleo {
         // Return member record and their voting power
         return (member_record, member_record.voting_power);
     }
+
+    // Manual initialization (acts as constructor fix)
+    async transition initialize() -> Future {
+        return finalize_initialize();
+    }
+
+    async function finalize_initialize() {
+        // Initialize mapping with a dummy value to ensure existence
+        // (Optional but helps with some deployment checks)
+        let initialized: bool = daos.contains(0field);
+        if !initialized {
+            // Reserve ID 0
+            let zero_dao: DAO = DAO {
+                id: 0field,
+                creator: aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc, // burn address
+                voting_period: 0u32,
+                quorum: 0u32,
+                proposal_threshold: 0u64,
+                created_at: 0u32,
+            };
+            daos.set(0field, zero_dao);
+        }
+    }
 }

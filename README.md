@@ -1,29 +1,46 @@
-# 🗳️ AleoDAO - The Universal Privacy Layer
+# AleoDAO - 3-in-1 Privacy-First Governance Platform
 
-**The World's First Privacy-First Governance Platform on Aleo**
+![AleoDAO Banner](public/og-image.png)
 
-AleoDAO is a comprehensive technical infrastructure designed to protect the two most critical assets in decentralized communication: **Your Choice and Your Wealth.** Leveraging Aleo's Zero-Knowledge Proof (ZKP) architecture, it serves as a multi-purpose engine for confidential high-stakes interactions.
+## 🚀 Project Overview
+
+**AleoDAO** is a comprehensive **Privacy-First DAO Infrastructure** built on the **Aleo** blockchain. It leverages Zero-Knowledge Proofs (ZKPs) to enable verifiable yet confidential governance.
+
+This is a **3-in-1 DAO System** that solves critical privacy issues in current governance models:
+
+1.  **🔒 Private DAOs:** Participate in governance without revealing your total token holdings or financial status.
+2.  **🗳️ Anonymous Voting:** Cast on-chain votes where your choice (Yes/No) is encrypted, but the final tally is mathematically verifiable.
+3.  **📊 Private Polls:** Conduct multi-choice surveys and polls where individual responses are kept secret, encouraging honest feedback.
 
 ---
 
-## 🌟 The Four Core Pillars
+### ⚠️ Deployment Status (Hackathon Note)
 
-### 1. Anonymous Voting
-*   **Encrypted Choices**: Your vote (Approve, Reject, or Abstain) is cryptographically hashed locally.
-*   **ZK-Proof Submission**: Submit a proof of validity without ever revealing the underlying choice.
-*   **Whall Protection**: Prevents strategic voting and "whale watching" by keeping individual ballots secret.
+**Current Status: DEMO MODE ACTIVE**
 
-### 2. Private DAO Governance
-*   **Confidential Holdings**: Prove you meet the threshold for participation without revealing your exact token balance.
-*   **Private Membership**: Join and interact with organizations while keeping your financial footprint hidden from other members.
+Due to intermittent instability and "500 Internal Server Errors" on the **Aleo Testnet 3** (and its explorers/endpoints), the live smart contract deployment could not be finalized along with the frontend integration. 
 
-### 3. Whistleblower Protection
-*   **Safe Signaling**: Report critical issues or "signal" within an organization with absolute cryptographic anonymity.
-*   **Coercion Resistance**: Because the whistleblower's identity is never revealed on-chain, retaliation becomes technically impossible.
+However, the application is **fully functional in Demo Mode**:
+- **Smart Contracts** are fully written, compiled, and available in the `programs/` directory.
+- **ZK-Proofs** generation is simulated in the frontend to demonstrate the UX.
+- All 3 core features (DAOs, Proposals, Polls) are interactive and testable.
 
-### 4. Private Polls & Surveys
-*   **Unbiased Data**: Gather honest community feedback without the pressure of surveillance.
-*   **Integrity Verified**: Results are publicly verifiable via ZK-Rollups while individual responses remain confidential.
+---
+
+## ✨ Key Features
+
+### 1. Private DAOs
+- Create organizations with customizable governance settings.
+- **Privacy:** Member list is public, but individual **Voting Power** is stored in private records (`record Member`). No one can see your "weight" in the DAO.
+
+### 2. Anonymous Voting (ZK-Voting)
+- Vote on proposals without revealing your choice.
+- **Privacy:** Your vote (`true`/`false`) is encrypted in a `PrivateVote` record.
+- **Verifiability:** A `VoteReceipt` is published to prove you participated.
+
+### 3. Private Polls
+- Create and participate in community polls.
+- **Privacy:** Responses are encrypted, ensuring users can answer honestly without fear of social pressure or retaliation.
 
 ---
 

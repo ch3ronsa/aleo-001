@@ -1,69 +1,61 @@
 @echo off
-title AleoDAO WSL Dagitim Araci (Final)
+title AleoDAO WSL Dagitim Araci (Loglu)
 color 0A
 
 echo ========================================================
-echo       AleoDAO - WSL Dagitim Araci (Ubuntu)
+echo       AleoDAO - WSL Dagitim Araci (Ubuntu) - LOGLU
 echo ========================================================
 echo.
-echo Leo, Ubuntu kullanici profilinize yuklu.
-echo Script simdi 'bash -l' (login shell) modunda calisacak.
+echo Islem kayitlari 'deploy_log.txt' dosyasina yazilacak.
 echo.
 
 echo [DEBUG] Leo versiyonu kontrol ediliyor...
 wsl bash -l -c "leo --version"
 if %errorlevel% neq 0 (
-    echo [HATA] Leo hala bulunamadi.
-    echo Lutfen Ubuntu terminalini acip 'leo --version' yazdiginizda calistigindan emin olun.
+    echo [HATA] Leo bulunamadi.
     pause
     exit /b
 )
-echo [OK] Leo basariyla tespit edildi!
-echo.
+echo [OK] Leo tespit edildi.
 
 :ASK_KEY
 set /p PRIVATE_KEY="Lutfen Aleo Private Key'inizi yapistirin: "
 if "%PRIVATE_KEY%"=="" goto ASK_KEY
 
-echo.
-echo [1/3] DAO Registry (Kayit Sistemi) dagitiliyor...
-echo ----------------------------------------------------
-wsl bash -l -c "cd '/mnt/c/Users/cheo/Desktop/leo/programs/dao_registry' && leo deploy --network testnet --endpoint https://api.explorer.aleo.org/v1 --private-key %PRIVATE_KEY%"
-if %errorlevel% neq 0 (
-    echo.
-    echo [HATA] DAO Registry dagitilamadi.
-    pause
-) else (
-    echo [BASARILI] DAO Registry yuklendi.
-)
+echo. > deploy_log.txt
+echo BASLANGIC ZAMANI: %DATE% %TIME% >> deploy_log.txt
+echo ---------------------------------------------------- >> deploy_log.txt
 
 echo.
-echo [2/3] Proposal (Teklif) Sistemi dagitiliyor...
-echo ----------------------------------------------------
-wsl bash -l -c "cd '/mnt/c/Users/cheo/Desktop/leo/programs/proposal' && leo deploy --network testnet --endpoint https://api.explorer.aleo.org/v1 --private-key %PRIVATE_KEY%"
-if %errorlevel% neq 0 (
-    echo.
-    echo [HATA] Proposal sistemi dagitilamadi.
-    pause
-) else (
-    echo [BASARILI] Proposal sistemi yuklendi.
-)
+echo [1/3] DAO Registry Dagitiliyor...
+echo [LOG] DAO Registry baslatildi... >> deploy_log.txt
+wsl bash -l -c "cd '/mnt/c/Users/cheo/Desktop/leo/programs/dao_registry' && leo deploy --network testnet --endpoint https://api.explorer.provable.com/v1 --private-key %PRIVATE_KEY%" 2>&1 | tee -a deploy_log.txt
+echo.
+echo [1/3] TAMAMLANDI - Lutfen yukaridaki ciktiyi kontrol edin.
+echo.
+pause
 
 echo.
-echo [3/3] Private Vote (Gizli Oylama) dagitiliyor...
-echo ----------------------------------------------------
-wsl bash -l -c "cd '/mnt/c/Users/cheo/Desktop/leo/programs/private_vote' && leo deploy --network testnet --endpoint https://api.explorer.aleo.org/v1 --private-key %PRIVATE_KEY%"
-if %errorlevel% neq 0 (
-    echo.
-    echo [HATA] Private Vote sistemi dagitilamadi.
-    pause
-) else (
-    echo [BASARILI] Private Vote sistemi yuklendi.
-)
+echo [2/3] Proposal Sistemi Dagitiliyor...
+echo [LOG] Proposal baslatildi... >> deploy_log.txt
+wsl bash -l -c "cd '/mnt/c/Users/cheo/Desktop/leo/programs/proposal' && leo deploy --network testnet --endpoint https://api.explorer.provable.com/v1 --private-key %PRIVATE_KEY%" 2>&1 | tee -a deploy_log.txt
+echo.
+echo [2/3] TAMAMLANDI - Lutfen yukaridaki ciktiyi kontrol edin.
+echo.
+pause
+
+echo.
+echo [3/3] Private Vote Sistemi Dagitiliyor...
+echo [LOG] Private Vote baslatildi... >> deploy_log.txt
+wsl bash -l -c "cd '/mnt/c/Users/cheo/Desktop/leo/programs/private_vote' && leo deploy --network testnet --endpoint https://api.explorer.provable.com/v1 --private-key %PRIVATE_KEY%" 2>&1 | tee -a deploy_log.txt
+echo.
+echo [3/3] TAMAMLANDI - Lutfen yukaridaki ciktiyi kontrol edin.
+echo.
+pause
 
 echo.
 echo ========================================================
-echo ISLEM TAMAMLANDI.
+echo TUM ISLEMLER BITTI. 'deploy_log.txt' dosyasini kontrol edin.
 echo ========================================================
 echo.
 pause
