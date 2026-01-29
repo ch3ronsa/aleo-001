@@ -70,7 +70,7 @@ export default function HowItWorksPage() {
                         Universal Privacy Use Cases
                     </h2>
 
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid gap-6 md:grid-cols-3">
                         {/* Use Case 1 */}
                         <Card className="bg-zinc-900/30 border-zinc-800 rounded-[2rem] overflow-hidden">
                             <CardContent className="p-8 space-y-4">
@@ -102,21 +102,6 @@ export default function HowItWorksPage() {
                         </Card>
 
                         {/* Use Case 3 */}
-                        <Card className="bg-zinc-900/30 border-zinc-800 rounded-[2rem] overflow-hidden">
-                            <CardContent className="p-8 space-y-4">
-                                <div className="h-12 w-12 rounded-xl bg-[#ef4444]/10 flex items-center justify-center border border-[#ef4444]/20">
-                                    <MessageSquare className="h-6 w-6 text-[#ef4444]" />
-                                </div>
-                                <h3 className="text-2xl font-bold">Whistleblower Integrity</h3>
-                                <p className="text-zinc-500">
-                                    Safely report issues within an organization with absolute cryptographic anonymity.
-                                    Because your identity is never revealed on-chain, retaliation becomes technically
-                                    impossible. Your voice is heard, but your identity is protected.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        {/* Use Case 4 */}
                         <Card className="bg-zinc-900/30 border-zinc-800 rounded-[2rem] overflow-hidden">
                             <CardContent className="p-8 space-y-4">
                                 <div className="h-12 w-12 rounded-xl bg-[#a855f7]/10 flex items-center justify-center border border-[#a855f7]/20">
