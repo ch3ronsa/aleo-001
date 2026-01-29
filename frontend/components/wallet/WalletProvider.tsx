@@ -5,6 +5,7 @@ import { WalletProvider as AleoWalletProvider } from '@demox-labs/aleo-wallet-ad
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui'
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo'
 import { DecryptPermission, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
+import { PuzzleWalletAdapter, FoxWalletAdapter, SoterWalletAdapter } from 'aleo-wallet-adapters'
 
 // Import wallet adapter styles
 import '@demox-labs/aleo-wallet-adapter-reactui/styles.css'
@@ -12,6 +13,17 @@ import '@demox-labs/aleo-wallet-adapter-reactui/styles.css'
 export function WalletProvider({ children }: { children: React.ReactNode }) {
     const wallets = useMemo(
         () => [
+            // Official ecosystem wallets (recommended)
+            new PuzzleWalletAdapter({
+                appName: 'AleoDAO',
+            }),
+            new FoxWalletAdapter({
+                appName: 'AleoDAO',
+            }),
+            new SoterWalletAdapter({
+                appName: 'AleoDAO',
+            }),
+            // Leo Wallet (legacy)
             new LeoWalletAdapter({
                 appName: 'AleoDAO',
             }),
