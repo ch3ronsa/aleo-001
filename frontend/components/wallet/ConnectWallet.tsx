@@ -1,10 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Wallet, LogOut, Copy, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useWallet } from '@demox-labs/aleo-wallet-adapter-react'
-import { WalletMultiButton } from '@demox-labs/aleo-wallet-adapter-reactui'
 import { formatAddress } from '@/lib/utils'
 import {
     DropdownMenu,
@@ -17,8 +16,27 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 
 export function ConnectWallet() {
-    const { publicKey, connected, disconnect, connecting } = useWallet()
+    const { publicKey, connected, disconnect, connecting, select, wallets } = useWallet()
     const { toast } = useToast()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const handleConnect = async () => {
+        try {
+            // Select Leo Wallet
+            await select('Leo Wallet' as any)
+        } catch (e) {
+            console.error("Failed to connect wallet:", e)
+            toast({
+                title: "Connection Failed",
+                description: "Make sure Leo Wallet extension is installed.",
+                variant: "destructive"
+            })
+        }
+    }
 
     const copyAddress = () => {
         if (publicKey) {
@@ -30,16 +48,29 @@ export function ConnectWallet() {
         }
     }
 
-    // If not connected, show the official WalletMultiButton which handles wallet selection
-    if (!connected || !publicKey) {
+    // Prevent hydration mismatch
+    if (!mounted) {
         return (
-            <WalletMultiButton
-                className="!bg-primary !text-primary-foreground !rounded-md !px-4 !py-2 !font-medium !text-sm hover:!bg-primary/90"
-            />
+            <Button disabled className="gap-2">
+                <Wallet className="h-4 w-4" />
+                Loading...
+            </Button>
         )
     }
 
-    // If connected, show custom dropdown with address and options
+    if (!connected || !publicKey) {
+        return (
+            <Button
+                onClick={handleConnect}
+                disabled={connecting}
+                className="gap-2"
+            >
+                <Wallet className="h-4 w-4" />
+                {connecting ? 'Connecting...' : 'Connect Wallet'}
+            </Button>
+        )
+    }
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
