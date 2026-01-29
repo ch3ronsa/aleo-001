@@ -2,7 +2,7 @@
 # Aleo Deployment Script for WSL
 # Usage: ./deploy_final.sh
 
-# Stop on error
+# Stop on erro
 set -e
 
 echo "=================================================="

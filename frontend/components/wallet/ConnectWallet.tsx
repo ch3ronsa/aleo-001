@@ -3,7 +3,7 @@
 import React from 'react'
 import { Wallet, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useWallet } from '@demox-labs/aleo-wallet-adapter-react'
+import { useWallet } from '@/lib/aleo/wallet'
 import { formatAddress } from '@/lib/utils'
 import {
     DropdownMenu,
@@ -13,25 +13,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { WalletAdapterNetwork, WalletName } from '@demox-labs/aleo-wallet-adapter-base'
 
 export function ConnectWallet() {
-    const { publicKey, wallet, requestTransaction, disconnect, select } = useWallet()
+    const { address, isConnected, connect, disconnect } = useWallet()
 
-    // Function to handle connection
-    const handleConnect = () => {
-        // This brings up the wallet selection modal from the adapter if implemented,
-        // or we can force select 'Leo Wallet'
-        select('Leo Wallet' as WalletName)
-    }
-
-    if (!publicKey) {
+    if (!isConnected || !address) {
         return (
             <Button
-                onClick={() => {
+                onClick={async () => {
                     try {
-                        // Force selection of Leo Wallet as it's our primary supported wallet
-                        select('Leo Wallet' as WalletName);
+                        await connect();
                     } catch (e) {
                         console.error("Failed to connect wallet:", e);
                     }
@@ -49,7 +40,7 @@ export function ConnectWallet() {
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
                     <Wallet className="h-4 w-4" />
-                    {formatAddress(publicKey)}
+                    {formatAddress(address)}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

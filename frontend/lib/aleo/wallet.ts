@@ -10,8 +10,10 @@ export const useWallet = () => {
     const { wallet, publicKey, connected, select, disconnect, requestTransaction } = useAleoWallet()
 
     const connect = useCallback(async () => {
-        // Leo wallet is usually standard, but we could make this dynamic
+        // Select Leo Wallet (this should trigger the wallet connection dialog)
         select('Leo Wallet' as WalletName)
+        // Note: The actual connection happens when the user approves in the wallet extension
+        // The connected state will update automatically via the adapter
     }, [select])
 
     return {
