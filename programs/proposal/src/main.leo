@@ -38,6 +38,12 @@ program ad_proposal_5821.aleo {
     // Proposal status tracking
     mapping proposal_status: field => u8;
 
+    // Constructor - required for deployment (Leo 3.1+)
+    @noupgrade
+    async constructor() {
+        // Non-upgradable deployment
+    }
+
     // Create a new proposal
     async transition create_proposal(
         public dao_id: field,

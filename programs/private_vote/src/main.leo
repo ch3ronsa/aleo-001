@@ -27,6 +27,12 @@ program ad_vote_5821.aleo {
     // Aggregate vote tallies (updated privately)
     mapping vote_tallies: field => field;  // proposal_id => encrypted_tally
 
+    // Constructor - required for deployment (Leo 3.1+)
+    @noupgrade
+    async constructor() {
+        // Non-upgradable deployment
+    }
+
     // Cast a private vote
     // Takes a Member record from dao_registry to prove voting power
     // Returns a private Vote record, public VoteReceipt, and Future

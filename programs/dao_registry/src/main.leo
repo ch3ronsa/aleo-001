@@ -29,6 +29,13 @@ program ad_registry_5821.aleo {
     // DAO settings
     mapping dao_settings: field => field;
 
+    // Constructor - required for deployment (Leo 3.1+)
+    // @noupgrade means this program cannot be upgraded after deployment
+    @noupgrade
+    async constructor() {
+        // Constructor runs on deployment - no logic needed for non-upgradable programs
+    }
+
     // Create a new DAO
     // Returns a Future that resolves when the DAO is stored on-chain
     async transition create_dao(
