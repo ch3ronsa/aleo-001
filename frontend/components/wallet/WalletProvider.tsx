@@ -2,8 +2,12 @@
 
 import React, { useMemo } from 'react'
 import { WalletProvider as AleoWalletProvider } from '@demox-labs/aleo-wallet-adapter-react'
+import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui'
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo'
 import { DecryptPermission, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
+
+// Import wallet adapter styles
+import '@demox-labs/aleo-wallet-adapter-reactui/styles.css'
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
     const wallets = useMemo(
@@ -22,7 +26,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             network={WalletAdapterNetwork.Testnet}
             autoConnect={true}
         >
-            {children}
+            <WalletModalProvider>
+                {children}
+            </WalletModalProvider>
         </AleoWalletProvider>
     )
 }
