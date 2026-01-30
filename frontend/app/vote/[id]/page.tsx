@@ -300,48 +300,96 @@ export default function VotePage() {
                             </div>
                         </div>
 
-                        {/* Results Card */}
+                        {/* Results Card - Privacy-Preserving */}
                         <div className="bg-[#111111] border border-zinc-900 rounded-xl overflow-hidden">
                             <div className="p-5 border-b border-zinc-900">
-                                <h3 className="font-bold text-white">Current results</h3>
+                                <h3 className="font-bold text-white flex items-center gap-2">
+                                    {isActive ? (
+                                        <>
+                                            <Lock className="h-4 w-4 text-[#3b82f6]" />
+                                            Voting Results
+                                        </>
+                                    ) : (
+                                        "Final Results"
+                                    )}
+                                </h3>
                             </div>
-                            <div className="p-5 space-y-6">
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm font-medium">
-                                        <span className="text-zinc-300">Approve</span>
-                                        <span className="text-white">{yesPercentage}%</span>
+                            <div className="p-5">
+                                {isActive ? (
+                                    // Privacy Mode: Hide results during active voting
+                                    <div className="space-y-4">
+                                        <div className="p-6 rounded-xl bg-gradient-to-br from-[#3b82f6]/10 to-[#3b82f6]/5 border border-[#3b82f6]/20">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <Shield className="h-5 w-5 text-[#3b82f6] mt-0.5 flex-shrink-0" />
+                                                <div>
+                                                    <h4 className="font-bold text-white text-sm mb-1">Privacy Protection Active</h4>
+                                                    <p className="text-xs text-zinc-400 leading-relaxed">
+                                                        Results are hidden during voting to prevent bandwagon effects.
+                                                        Your vote is encrypted with zero-knowledge proofs.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-zinc-500 font-medium">Total Participants</span>
+                                                <span className="text-white font-bold">{totalVotes > 0 ? `${totalVotes} votes` : 'No votes yet'}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="text-zinc-500 font-medium">Results Available</span>
+                                                <span className="text-[#3b82f6] font-bold">After {formatDate(proposal.endTime)}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-zinc-800">
+                                            <p className="text-[10px] text-zinc-600 leading-relaxed">
+                                                <strong className="text-zinc-500">How it works:</strong> Your vote choice is encrypted locally.
+                                                Only a ZK-proof of validity is submitted on-chain. Final tallies are revealed when voting ends.
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white transition-all duration-1000" style={{ width: `${yesPercentage}%` }} />
+                                ) : (
+                                    // Results revealed after voting ends
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm font-medium">
+                                                <span className="text-zinc-300">Approve</span>
+                                                <span className="text-white">{yesPercentage}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                                <div className="h-full bg-white transition-all duration-1000" style={{ width: `${yesPercentage}%` }} />
+                                            </div>
+                                            <div className="text-[11px] text-zinc-500 font-medium">
+                                                {proposal.forVotes} ALEO
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm font-medium">
+                                                <span className="text-zinc-300">Reject</span>
+                                                <span className="text-white">{noPercentage}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                                <div className="h-full bg-white transition-all duration-1000" style={{ width: `${noPercentage}%` }} />
+                                            </div>
+                                            <div className="text-[11px] text-zinc-500 font-medium">
+                                                {proposal.againstVotes} ALEO
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm font-medium">
+                                                <span className="text-zinc-300">Abstain</span>
+                                                <span className="text-white">{abstainPercentage}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                                <div className="h-full bg-white transition-all duration-1000" style={{ width: `${abstainPercentage}%` }} />
+                                            </div>
+                                            <div className="text-[11px] text-zinc-500 font-medium">
+                                                {proposal.abstainVotes} ALEO
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="text-[11px] text-zinc-500 font-medium">
-                                        {proposal.forVotes} ALEO
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm font-medium">
-                                        <span className="text-zinc-300">Reject</span>
-                                        <span className="text-white">{noPercentage}%</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white transition-all duration-1000" style={{ width: `${noPercentage}%` }} />
-                                    </div>
-                                    <div className="text-[11px] text-zinc-500 font-medium">
-                                        {proposal.againstVotes} ALEO
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm font-medium">
-                                        <span className="text-zinc-300">Abstain</span>
-                                        <span className="text-white">{abstainPercentage}%</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white transition-all duration-1000" style={{ width: `${abstainPercentage}%` }} />
-                                    </div>
-                                    <div className="text-[11px] text-zinc-500 font-medium">
-                                        {proposal.abstainVotes} ALEO
-                                    </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 

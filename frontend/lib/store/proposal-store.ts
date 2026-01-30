@@ -42,19 +42,26 @@ export const useProposalStore = create<ProposalState>()(
     persist(
         (set, get) => ({
             proposals: [
-                // Sample proposals for demo
+                // Sample proposals for demo - Privacy-focused examples
                 {
                     id: 'prop_001',
                     daoId: 'dao_001',
                     title: 'Treasury Allocation for Developer Grants',
-                    description: 'Allocate 10,000 tokens from the treasury to fund developer grants for privacy-preserving applications. This will help grow our ecosystem and attract new talent.',
+                    description: `Allocate 10,000 ALEO tokens from the DAO treasury to fund privacy-preserving application development grants.
+
+**Privacy Protection:**
+- Individual vote choices remain encrypted
+- Treasury balance visible only to DAO members
+- Grant recipient identities protected via ZK-proofs
+
+This proposal demonstrates AleoDAO's "Anonymous Voting" feature where your ballot choice is encrypted locally and only a ZK-proof is submitted on-chain.`,
                     imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1000',
                     proposer: 'aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc',
                     status: 'active',
-                    forVotes: 75,
-                    againstVotes: 20,
-                    abstainVotes: 5,
-                    totalVoters: 45,
+                    forVotes: 0, // Hidden during active voting
+                    againstVotes: 0,
+                    abstainVotes: 0,
+                    totalVoters: 12, // Only total count visible
                     quorumRequired: 51,
                     startTime: Date.now() - 86400000 * 2,
                     endTime: Date.now() + 86400000 * 5,
@@ -63,15 +70,22 @@ export const useProposalStore = create<ProposalState>()(
                 {
                     id: 'prop_002',
                     daoId: 'dao_001',
-                    title: 'Update Voting Period to 5 Days',
-                    description: 'Reduce the default voting period from 7 days to 5 days to speed up governance decisions while maintaining sufficient time for member participation.',
+                    title: 'Confidential Governance Parameter Update',
+                    description: `Reduce the default voting period from 7 days to 5 days to accelerate governance while maintaining privacy.
+
+**Why Privacy Matters:**
+- Prevents whale manipulation (large holders can't see current sentiment)
+- Eliminates bandwagon voting (users vote based on conviction, not trends)
+- Protects minority opinions from social pressure
+
+This showcases how AleoDAO prevents "governance coercion" by hiding intermediate results.`,
                     imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=1000',
                     proposer: 'aleo1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy3s7v2vh',
                     status: 'active',
-                    forVotes: 45,
-                    againstVotes: 35,
-                    abstainVotes: 10,
-                    totalVoters: 32,
+                    forVotes: 0,
+                    againstVotes: 0,
+                    abstainVotes: 0,
+                    totalVoters: 8,
                     quorumRequired: 51,
                     startTime: Date.now() - 86400000,
                     endTime: Date.now() + 86400000 * 6,
@@ -80,12 +94,17 @@ export const useProposalStore = create<ProposalState>()(
                 {
                     id: 'prop_003',
                     daoId: 'dao_002',
-                    title: 'Community Ambassador Program',
-                    description: 'Launch a community ambassador program to increase awareness of ZK technology. Budget: 5,000 tokens for rewards and marketing.',
+                    title: 'Private Community Ambassador Program',
+                    description: `Launch a ZK-powered community ambassador program with confidential reward distribution.
+
+**Final Results (Voting Ended):**
+This proposal has concluded and results are now public. During active voting, all vote choices were encrypted.
+
+Budget: 5,000 ALEO tokens for privacy-preserving marketing initiatives.`,
                     imageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=1000',
                     proposer: 'aleo1zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz45x7wl',
                     status: 'passed',
-                    forVotes: 85,
+                    forVotes: 85, // Results revealed after voting ends
                     againstVotes: 10,
                     abstainVotes: 5,
                     totalVoters: 50,
