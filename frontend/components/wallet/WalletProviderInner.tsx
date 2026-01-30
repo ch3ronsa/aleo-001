@@ -1,36 +1,31 @@
 'use client'
 
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo } from 'react'
 import { WalletProvider as AleoWalletProvider } from '@demox-labs/aleo-wallet-adapter-react'
 import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui'
 import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo'
-import {
-    PuzzleWalletAdapter,
-    FoxWalletAdapter,
-    SoterWalletAdapter
-} from 'aleo-wallet-adapters'
 import { DecryptPermission, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
 
 // Import wallet adapter styles
 import '@demox-labs/aleo-wallet-adapter-reactui/styles.css'
 
-export default function WalletProviderInner({ children }: { children: React.ReactNode }) {
+export default function WalletProviderInner({
+    children,
+    isSSR = false
+}: {
+    children: React.ReactNode,
+    isSSR?: boolean
+}) {
+    // Only initialize LeoWalletAdapter. 
+    // We removed aleo-wallet-adapters (Puzzle/Fox/Soter) because it caused build crashes 
+    // due to conflicting React versions in its dependencies (Puzzle SDK).
     const wallets = useMemo(
-        () => [
+        () => isSSR ? [] : [
             new LeoWalletAdapter({
                 appName: 'AleoDAO',
             }),
-            new PuzzleWalletAdapter({
-                appName: 'AleoDAO',
-            }),
-            new FoxWalletAdapter({
-                appName: 'AleoDAO',
-            }),
-            new SoterWalletAdapter({
-                appName: 'AleoDAO',
-            }),
         ],
-        []
+        [isSSR]
     )
 
     return (
@@ -38,7 +33,7 @@ export default function WalletProviderInner({ children }: { children: React.Reac
             wallets={wallets}
             decryptPermission={DecryptPermission.UponRequest}
             network={WalletAdapterNetwork.Testnet}
-            autoConnect={true}
+            autoConnect={!isSSR}
         >
             <WalletModalProvider>
                 {children}

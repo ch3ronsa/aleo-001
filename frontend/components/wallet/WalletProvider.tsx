@@ -1,12 +1,7 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import React, { useState, useEffect } from 'react'
-
-const WalletProviderInner = dynamic(
-    () => import('./WalletProviderInner'),
-    { ssr: false }
-)
+import WalletProviderInner from './WalletProviderInner'
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
     const [mounted, setMounted] = useState(false)
@@ -15,9 +10,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setMounted(true)
     }, [])
 
-    if (!mounted) {
-        return <>{children}</>
-    }
-
-    return <WalletProviderInner>{children}</WalletProviderInner>
+    // During SSR (mounted=false), we still wrap in WalletProviderInner but mark it as isSSR
+    // This provides the context so children calling useWallet() don't crash the build/SSR.
+    // Once mounted, we re-render with full wallet functionality.
+    return (
+        <WalletProviderInner isSSR={!mounted}>
+            {children}
+        </WalletProviderInner>
+    )
 }
