@@ -1,46 +1,60 @@
 'use client'
 
-import { useConnect, useAccount, useDisconnect } from '@puzzlehq/sdk'
+import { useWallet as useAleoWallet } from '@demox-labs/aleo-wallet-adapter-react'
 import { useCallback } from 'react'
 
 // Wrapper hook that provides a consistent wallet API for the app
-// Now uses Puzzle SDK instead of demox-labs adapter
+// Now uses @demox-labs adapter instead of Puzzle SDK
 export const useWallet = () => {
-    const { connect } = useConnect()
-    const { account, isConnected: connected } = useAccount()
-    const { disconnect: puzzleDisconnect } = useDisconnect()
+    const {
+        publicKey,
+        connected,
+        connecting,
+        disconnect: aleoDisconnect,
+        select,
+        requestTransaction,
+        requestRecords,
+        requestBulkRecords,
+        decrypt,
+        sign
+    } = useAleoWallet()
 
-    const connectWallet = useCallback(async () => {
+    const connect = useCallback(async () => {
         try {
-            await connect()
+            // By default select Leo Wallet, but WalletMultiButton handles this better in the UI
+            await select('Leo Wallet' as any)
         } catch (error) {
             console.error('Failed to connect:', error)
             throw error
         }
-    }, [connect])
+    }, [select])
 
-    const disconnectWallet = useCallback(async () => {
+    const disconnect = useCallback(async () => {
         try {
-            await puzzleDisconnect()
+            await aleoDisconnect()
         } catch (error) {
             console.error('Failed to disconnect:', error)
         }
-    }, [puzzleDisconnect])
+    }, [aleoDisconnect])
 
     return {
-        // Map Puzzle SDK fields to what our app expects
-        account: account ? { address: () => ({ to_string: () => account.address }) } : null,
-        address: account?.address || null,
-        publicKey: account?.address || null, // Alias for compatibility
+        // Map adapter fields to what our app expects
+        // publicKey is already the address string in the adapter
+        address: publicKey || null,
+        publicKey: publicKey || null,
         isConnected: connected,
-        connected, // Alias for compatibility
-        isConnecting: false,
-        connect: connectWallet,
-        disconnect: disconnectWallet,
-        // For transaction support (placeholder - needs Puzzle SDK transaction API)
-        requestTransaction: async (tx: any) => {
-            console.log('Transaction request:', tx)
-            throw new Error('Use Puzzle SDK transaction API directly')
-        },
+        connected,
+        isConnecting: connecting,
+        connecting,
+        connect,
+        disconnect,
+        // Aleo specific methods
+        requestTransaction,
+        requestRecords,
+        requestBulkRecords,
+        decrypt,
+        sign,
+        // For compatibility with some older parts of the app that might expect account.address()
+        account: publicKey ? { address: () => publicKey } : null,
     }
 }
