@@ -1,31 +1,46 @@
 'use client'
 
-import { useWallet as useAleoWallet } from '@demox-labs/aleo-wallet-adapter-react'
+import { useConnect, useAccount, useDisconnect } from '@puzzlehq/sdk'
 import { useCallback } from 'react'
 
-import { WalletName } from '@demox-labs/aleo-wallet-adapter-base'
-
-// Adapts the @demox-labs/aleo-wallet-adapter-react hook to match the API used in the app
+// Wrapper hook that provides a consistent wallet API for the app
+// Now uses Puzzle SDK instead of demox-labs adapter
 export const useWallet = () => {
-    const { wallet, publicKey, connected, select, disconnect, requestTransaction } = useAleoWallet()
+    const { connect } = useConnect()
+    const { account, isConnected: connected } = useAccount()
+    const { disconnect: puzzleDisconnect } = useDisconnect()
 
-    const connect = useCallback(async () => {
-        // Select Leo Wallet (this should trigger the wallet connection dialog)
-        select('Leo Wallet' as WalletName)
-        // Note: The actual connection happens when the user approves in the wallet extension
-        // The connected state will update automatically via the adapter
-    }, [select])
+    const connectWallet = useCallback(async () => {
+        try {
+            await connect()
+        } catch (error) {
+            console.error('Failed to connect:', error)
+            throw error
+        }
+    }, [connect])
+
+    const disconnectWallet = useCallback(async () => {
+        try {
+            await puzzleDisconnect()
+        } catch (error) {
+            console.error('Failed to disconnect:', error)
+        }
+    }, [puzzleDisconnect])
 
     return {
-        // Map adapter fields to what our app expects
-        account: publicKey ? { address: () => ({ to_string: () => publicKey }) } : null,
-        address: publicKey,
+        // Map Puzzle SDK fields to what our app expects
+        account: account ? { address: () => ({ to_string: () => account.address }) } : null,
+        address: account?.address || null,
+        publicKey: account?.address || null, // Alias for compatibility
         isConnected: connected,
-        isConnecting: false, // The adapter handles connection state internally
-        connect,
-        disconnect,
-        requestTransaction,
-        // Expose original adapter values just in case
-        adapter: { wallet, publicKey, connected, select, disconnect, requestTransaction }
+        connected, // Alias for compatibility
+        isConnecting: false,
+        connect: connectWallet,
+        disconnect: disconnectWallet,
+        // For transaction support (placeholder - needs Puzzle SDK transaction API)
+        requestTransaction: async (tx: any) => {
+            console.log('Transaction request:', tx)
+            throw new Error('Use Puzzle SDK transaction API directly')
+        },
     }
 }

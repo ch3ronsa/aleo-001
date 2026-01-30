@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Wallet, LogOut, Copy, ExternalLink } from 'lucide-react'
+import { Wallet, LogOut, Copy, ExternalLink, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useWallet } from '@demox-labs/aleo-wallet-adapter-react'
+import { useConnect, useAccount, useDisconnect } from '@puzzlehq/sdk'
 import { formatAddress } from '@/lib/utils'
 import {
     DropdownMenu,
@@ -16,7 +16,9 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 
 export function ConnectWallet() {
-    const { publicKey, connected, disconnect, connecting, select, wallets } = useWallet()
+    const { connect, isConnecting } = useConnect()
+    const { account, isConnected } = useAccount()
+    const { disconnect } = useDisconnect()
     const { toast } = useToast()
     const [mounted, setMounted] = useState(false)
 
@@ -26,21 +28,20 @@ export function ConnectWallet() {
 
     const handleConnect = async () => {
         try {
-            // Select Leo Wallet
-            await select('Leo Wallet' as any)
-        } catch (e) {
+            await connect()
+        } catch (e: any) {
             console.error("Failed to connect wallet:", e)
             toast({
                 title: "Connection Failed",
-                description: "Make sure Leo Wallet extension is installed.",
+                description: e?.message || "Make sure Puzzle Wallet extension is installed.",
                 variant: "destructive"
             })
         }
     }
 
     const copyAddress = () => {
-        if (publicKey) {
-            navigator.clipboard.writeText(publicKey)
+        if (account?.address) {
+            navigator.clipboard.writeText(account.address)
             toast({
                 title: "Address Copied",
                 description: "Wallet address copied to clipboard"
@@ -58,15 +59,24 @@ export function ConnectWallet() {
         )
     }
 
-    if (!connected || !publicKey) {
+    if (!isConnected || !account?.address) {
         return (
             <Button
                 onClick={handleConnect}
-                disabled={connecting}
+                disabled={isConnecting}
                 className="gap-2"
             >
-                <Wallet className="h-4 w-4" />
-                {connecting ? 'Connecting...' : 'Connect Wallet'}
+                {isConnecting ? (
+                    <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Connecting...
+                    </>
+                ) : (
+                    <>
+                        <Wallet className="h-4 w-4" />
+                        Connect Wallet
+                    </>
+                )}
             </Button>
         )
     }
@@ -77,18 +87,18 @@ export function ConnectWallet() {
                 <Button variant="outline" className="gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                     <Wallet className="h-4 w-4" />
-                    {formatAddress(publicKey)}
+                    {formatAddress(account.address)}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Connected Wallet</DropdownMenuLabel>
+                <DropdownMenuLabel>Connected via Puzzle</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={copyAddress} className="gap-2 cursor-pointer">
                     <Copy className="h-4 w-4" />
                     Copy Address
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                    onClick={() => window.open(`https://explorer.aleo.org/address/${publicKey}`, '_blank')}
+                    onClick={() => window.open(`https://explorer.aleo.org/address/${account.address}`, '_blank')}
                     className="gap-2 cursor-pointer"
                 >
                     <ExternalLink className="h-4 w-4" />

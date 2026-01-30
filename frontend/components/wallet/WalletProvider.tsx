@@ -1,45 +1,21 @@
 'use client'
 
-import React, { useMemo, useEffect, useState } from 'react'
-import { WalletProvider as AleoWalletProvider } from '@demox-labs/aleo-wallet-adapter-react'
-import { WalletModalProvider } from '@demox-labs/aleo-wallet-adapter-reactui'
-import { LeoWalletAdapter } from '@demox-labs/aleo-wallet-adapter-leo'
-import { DecryptPermission, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
+import React, { ReactNode } from 'react'
+import { PuzzleWalletProvider } from '@puzzlehq/sdk'
 
-// Import wallet adapter styles
-import '@demox-labs/aleo-wallet-adapter-reactui/styles.css'
+interface WalletProviderProps {
+    children: ReactNode
+}
 
-export function WalletProvider({ children }: { children: React.ReactNode }) {
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    const wallets = useMemo(
-        () => [
-            new LeoWalletAdapter({
-                appName: 'AleoDAO',
-            }),
-        ],
-        []
-    )
-
-    // Prevent SSR issues - only render wallet provider on client
-    if (!mounted) {
-        return <>{children}</>
-    }
-
+export function WalletProvider({ children }: WalletProviderProps) {
     return (
-        <AleoWalletProvider
-            wallets={wallets}
-            decryptPermission={DecryptPermission.UponRequest}
-            network={WalletAdapterNetwork.Testnet}
-            autoConnect={true}
+        <PuzzleWalletProvider
+            dAppName="AleoDAO"
+            dAppDescription="Privacy-first DAO governance using zero-knowledge proofs"
+            dAppUrl="https://aleodao.vercel.app"
+            dAppIconURL="https://aleodao.vercel.app/icon.png"
         >
-            <WalletModalProvider>
-                {children}
-            </WalletModalProvider>
-        </AleoWalletProvider>
+            {children}
+        </PuzzleWalletProvider>
     )
 }

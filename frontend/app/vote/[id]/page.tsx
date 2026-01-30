@@ -14,7 +14,6 @@ import { useProposalStore } from '@/lib/store/proposal-store'
 import { useVoteStore, VoteChoice } from '@/lib/store/vote-store'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { PROGRAMS, FEES } from '@/lib/aleo/config'
-import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
 import { cn } from '@/lib/utils'
 
 // GitHub Icon Component
@@ -45,7 +44,7 @@ export default function VotePage() {
     const dao = proposal ? getDAO(proposal.daoId) : undefined
 
     // Check if user has already voted
-    const userHasVoted = isConnected && account ? hasVoted(proposalId, account.address().to_string()) : false
+    const userHasVoted = isConnected && account?.address ? hasVoted(proposalId, account.address) : false
 
     if (!proposal || !dao) {
         return (

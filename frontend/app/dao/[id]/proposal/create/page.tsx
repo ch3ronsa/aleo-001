@@ -14,7 +14,6 @@ import { useWallet } from '@/lib/aleo/wallet'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { useProposalStore } from '@/lib/store/proposal-store'
 import { PROGRAMS, FEES } from '@/lib/aleo/config'
-import { Transaction, WalletAdapterNetwork } from '@demox-labs/aleo-wallet-adapter-base'
 import { Header } from '@/components/layout/Header'
 
 export default function CreateProposalPage() {
@@ -62,25 +61,9 @@ export default function CreateProposalPage() {
         setIsCreating(true)
 
         try {
-            // Demo Mode Transaction Construction
-            // In a real app, this would be a call to proposal.aleo/propose
-            const transaction = Transaction.createTransaction(
-                account.address().to_string(),
-                WalletAdapterNetwork.Testnet,
-                PROGRAMS.PROPOSAL,
-                'propose',
-                [
-                    // Mock args for demo
-                    // dao_id, title_hash, etc.
-                    "123field", // mock id
-                    "123field", // mock title hash
-                ],
-                FEES.PROPOSE
-            )
-
-            if (requestTransaction) {
-                await requestTransaction(transaction)
-            }
+            // Demo Mode - directly create proposal in store
+            // In production, this would use Puzzle SDK's transaction API
+            const address = account?.address || 'demo_address'
 
             // Create Proposal in Store
             createProposal({
@@ -88,10 +71,10 @@ export default function CreateProposalPage() {
                 title: formData.title,
                 description: formData.description,
                 imageUrl: formData.imageUrl || undefined,
-                proposer: account.address().to_string(),
+                proposer: address,
                 quorumRequired: dao.quorumPercentage,
                 startTime: Date.now(),
-                endTime: Date.now() + (dao.votingPeriod * 10 * 1000), // Mock conversion of blocks to likely ms for demo
+                endTime: Date.now() + (dao.votingPeriod * 24 * 60 * 60 * 1000), // days to ms
             })
 
             toast({
@@ -109,10 +92,10 @@ export default function CreateProposalPage() {
                     title: formData.title,
                     description: formData.description,
                     imageUrl: formData.imageUrl || undefined,
-                    proposer: account.address().to_string(),
+                    proposer: account?.address || 'demo_address',
                     quorumRequired: dao.quorumPercentage,
                     startTime: Date.now(),
-                    endTime: Date.now() + (dao.votingPeriod * 10 * 1000),
+                    endTime: Date.now() + (dao.votingPeriod * 24 * 60 * 60 * 1000),
                 })
                 router.push(`/dao/${daoId}`)
             }
