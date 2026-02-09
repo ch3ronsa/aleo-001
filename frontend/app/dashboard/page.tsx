@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Plus, Users, FileText, TrendingUp, Wallet } from 'lucide-react'
+import { Plus, Users, FileText, Wallet } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ConnectWallet } from '@/components/wallet/ConnectWallet'
@@ -9,7 +9,6 @@ import { useWallet } from '@/lib/aleo/wallet'
 import { DAOList } from '@/components/dao/DAOList'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { useProposalStore } from '@/lib/store/proposal-store'
-import { formatNumber } from '@/lib/utils'
 
 import { Header } from '@/components/layout/Header'
 
@@ -20,10 +19,8 @@ export default function DashboardPage() {
 
     const activeProposals = getActiveProposals()
     const totalMembers = daos.reduce((acc, dao) => acc + dao.memberCount, 0)
-    const totalTreasury = daos.reduce((acc, dao) => acc + dao.treasuryBalance, 0)
-
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#000000] text-zinc-100 font-sans">
             <Header />
 
             <div className="container mx-auto px-4 py-8">
@@ -40,7 +37,7 @@ export default function DashboardPage() {
                 )}
                 {/* Stats */}
                 <div className="grid gap-6 md:grid-cols-3 mb-8">
-                    <Card>
+                    <Card className="bg-[#111111] border-zinc-900">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
                                 Total DAOs
@@ -55,7 +52,7 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="bg-[#111111] border-zinc-900">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
                                 Active Proposals
@@ -70,17 +67,17 @@ export default function DashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="bg-[#111111] border-zinc-900">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
-                                Total Value Locked
+                                Network
                             </CardTitle>
                             <Wallet className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{formatNumber(totalTreasury)}</div>
+                            <div className="text-2xl font-bold">Testnet</div>
                             <p className="text-xs text-muted-foreground">
-                                Tokens in DAO treasuries
+                                Aleo ZK-Powered
                             </p>
                         </CardContent>
                     </Card>

@@ -11,20 +11,20 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useWallet } from '@/lib/aleo/wallet'
 import { useDAOStore } from '@/lib/store/dao-store'
-import { PROGRAMS, FEES } from '@/lib/aleo/config'
+import { Header } from '@/components/layout/Header'
 
 export default function CreateDAOPage() {
     const router = useRouter()
     const { toast } = useToast()
     const { isConnected, account, requestTransaction } = useWallet()
-    const { createDAO } = useDAOStore()
+    const { createDAO, buildCreateDAOTransaction } = useDAOStore()
     const [isCreating, setIsCreating] = useState(false)
 
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         votingPeriod: '100800', // ~7 days in blocks
-        quorum: '5000', // 50%
+        quorum: '51', // 51%
         proposalThreshold: '1000',
     })
 
@@ -43,78 +43,74 @@ export default function CreateDAOPage() {
         setIsCreating(true)
 
         try {
-            // Demo Mode - directly create DAO in store
-            // In production, this would use Puzzle SDK's transaction API
-            const address = account?.address ? String(account.address) : 'demo_address'
-
-            // Optimistic UI update: Assume success for demo UX
+            const address = String(account.address)
             const votingPeriod = parseInt(formData.votingPeriod)
-            const quorumPercentage = parseInt(formData.quorum) / 100 // Convert from bps (5000) to percentage (50)
+            const quorum = parseInt(formData.quorum)
+            const proposalThreshold = parseInt(formData.proposalThreshold)
+            let txId: string | undefined
 
+            // Try real wallet transaction
+            if (requestTransaction) {
+                try {
+                    const nameHash = formData.name.length.toString()
+                    const transaction = buildCreateDAOTransaction(nameHash, votingPeriod, quorum * 100, proposalThreshold)
+                    const result = await requestTransaction(transaction)
+                    txId = typeof result === 'string' ? result : result?.transactionId
+                } catch (txError) {
+                    console.warn("Wallet transaction failed:", txError)
+                }
+            }
+
+            // Optimistic local update
             createDAO({
                 name: formData.name,
                 description: formData.description,
                 creator: address,
                 votingPeriod,
-                quorumPercentage
+                quorumPercentage: quorum,
             })
 
             toast({
-                title: "Transaction Submitted!",
-                description: "DAO creation transaction sent to Aleo network (Demo Mode).",
+                title: txId ? "DAO Created On-Chain" : "DAO Created",
+                description: txId
+                    ? "Your DAO creation transaction has been submitted to Aleo network."
+                    : "DAO created locally. Connect wallet to submit on-chain.",
             })
 
             router.push('/dashboard')
         } catch (error) {
-            console.error("Transaction failed:", error);
-
-            // Fallback for demo if user rejects or network fails
-            // We still want to show the functionality
-            if (confirm("Transaction failed or was rejected. Continue in Demo Mode?")) {
-                const votingPeriod = parseInt(formData.votingPeriod)
-                const quorumPercentage = parseInt(formData.quorum) / 100
-
-                createDAO({
-                    name: formData.name,
-                    description: formData.description,
-                    creator: String(account.address),
-                    votingPeriod,
-                    quorumPercentage
-                })
-                router.push('/dashboard')
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Failed to create DAO. Please try again.",
-                    variant: "destructive",
-                })
-            }
+            console.error("Transaction failed:", error)
+            toast({
+                title: "Error",
+                description: "Failed to create DAO. Please try again.",
+                variant: "destructive",
+            })
         } finally {
             setIsCreating(false)
         }
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <header className="border-b">
-                <div className="container mx-auto flex h-16 items-center px-4">
-                    <Link href="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <div className="min-h-screen bg-[#000000] text-zinc-100 font-sans">
+            <Header />
+
+            <div className="container mx-auto max-w-2xl px-4 py-8 lg:py-12">
+                <div className="mb-6">
+                    <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-white flex items-center gap-2 transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                         Back to Dashboard
                     </Link>
                 </div>
-            </header>
 
-            <div className="container mx-auto max-w-2xl px-4 py-12">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold">Create New DAO</h1>
-                    <p className="text-muted-foreground">
+                    <h1 className="text-3xl font-bold text-white mb-2">Create New DAO</h1>
+                    <p className="text-zinc-400">
                         Set up a new privacy-preserving DAO on Aleo
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <Card>
+                    <Card className="bg-[#111111] border-zinc-900">
                         <CardHeader>
                             <CardTitle>DAO Details</CardTitle>
                             <CardDescription>
@@ -172,9 +168,9 @@ export default function CreateDAOPage() {
                                         type="number"
                                         min="1"
                                         max="100"
-                                        placeholder="50"
-                                        value={parseInt(formData.quorum) / 100}
-                                        onChange={(e) => setFormData({ ...formData, quorum: (parseFloat(e.target.value) * 100).toString() })}
+                                        placeholder="51"
+                                        value={formData.quorum}
+                                        onChange={(e) => setFormData({ ...formData, quorum: e.target.value })}
                                         required
                                     />
                                     <p className="text-xs text-muted-foreground">
@@ -201,13 +197,13 @@ export default function CreateDAOPage() {
                             </div>
                         </CardContent>
 
-                        <CardFooter className="flex justify-between">
+                        <CardFooter className="flex justify-between border-t border-zinc-900 pt-4">
                             <Link href="/dashboard">
-                                <Button type="button" variant="outline">
+                                <Button type="button" variant="outline" className="border-zinc-800">
                                     Cancel
                                 </Button>
                             </Link>
-                            <Button type="submit" disabled={isCreating}>
+                            <Button type="submit" disabled={isCreating} className="bg-[#3b82f6] hover:bg-[#2563eb] text-white">
                                 {isCreating ? 'Creating...' : 'Create DAO'}
                             </Button>
                         </CardFooter>
@@ -215,22 +211,22 @@ export default function CreateDAOPage() {
                 </form>
 
                 {/* Info Card */}
-                <Card className="mt-6 border-primary/20 bg-primary/5">
+                <Card className="mt-6 border-[#3b82f6]/20 bg-[#3b82f6]/5">
                     <CardHeader>
-                        <CardTitle className="text-base">Privacy Features</CardTitle>
+                        <CardTitle className="text-base text-white">Privacy Features</CardTitle>
                     </CardHeader>
-                    <CardContent className="text-sm text-muted-foreground">
+                    <CardContent className="text-sm text-zinc-400">
                         <ul className="space-y-2">
                             <li className="flex items-start gap-2">
-                                <span className="text-primary">✓</span>
+                                <span className="text-[#3b82f6]">✓</span>
                                 <span>All member token balances remain private</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-primary">✓</span>
+                                <span className="text-[#3b82f6]">✓</span>
                                 <span>Vote choices are never revealed publicly</span>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="text-primary">✓</span>
+                                <span className="text-[#3b82f6]">✓</span>
                                 <span>Results are cryptographically verifiable</span>
                             </li>
                         </ul>

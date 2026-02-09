@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Users, FileText, Calendar, ArrowRight, Wallet } from 'lucide-react'
+import { Users, FileText, Calendar, ArrowRight, Shield } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatNumber, formatDate } from '@/lib/utils'
@@ -13,7 +13,7 @@ interface DAOCardProps {
 
 export function DAOCard({ dao }: DAOCardProps) {
     return (
-        <Card className="flex flex-col hover:border-primary/50 transition-colors">
+        <Card className="flex flex-col hover:border-[#3b82f6]/50 transition-colors bg-[#111111] border-zinc-900">
             <CardHeader>
                 <CardTitle className="line-clamp-1">{dao.name}</CardTitle>
                 <CardDescription className="line-clamp-2">
@@ -43,10 +43,10 @@ export function DAOCard({ dao }: DAOCardProps) {
                     </div>
 
                     <div className="flex justify-between">
-                        <span className="text-muted-foreground">Treasury:</span>
-                        <span className="font-medium flex items-center gap-1">
-                            <Wallet className="h-3 w-3" />
-                            {formatNumber(dao.treasuryBalance)} tokens
+                        <span className="text-muted-foreground">Privacy:</span>
+                        <span className="font-medium flex items-center gap-1 text-[#3b82f6]">
+                            <Shield className="h-3 w-3" />
+                            ZK-Verified
                         </span>
                     </div>
 

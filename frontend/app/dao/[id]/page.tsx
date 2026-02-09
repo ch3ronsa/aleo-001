@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Users, FileText, Wallet, Plus, Calendar, Shield } from 'lucide-react'
+import { ArrowLeft, Users, FileText, Plus, Calendar, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Header } from '@/components/layout/Header'
@@ -119,7 +119,7 @@ export default function DAODetailsPage() {
                                 <p className="text-zinc-500 text-sm max-w-sm text-center mb-6">
                                     This DAO hasn't had any governance proposals yet. Be the first to start a discussion.
                                 </p>
-                                <Link href="/dashboard/create">
+                                <Link href={`/dao/${daoId}/proposal/create`}>
                                     <Button variant="outline">Create Proposal</Button>
                                 </Link>
                             </Card>
@@ -152,25 +152,27 @@ export default function DAODetailsPage() {
                         <Card className="bg-[#111111] border-zinc-900">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
-                                    <Wallet className="h-5 w-5 text-[#3b82f6]" />
-                                    Treasury
+                                    <Shield className="h-5 w-5 text-[#3b82f6]" />
+                                    Governance
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="mb-4">
-                                    <span className="text-3xl font-bold text-white block">
-                                        {formatNumber(dao.treasuryBalance)}
-                                    </span>
-                                    <span className="text-sm text-zinc-500">ALEO Token</span>
-                                </div>
-                                <div className="space-y-3 pt-4 border-t border-zinc-900">
+                                <div className="space-y-3">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-zinc-500">Quorum</span>
                                         <span className="text-zinc-300">{dao.quorumPercentage}%</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-zinc-500">Proposal Threshold</span>
-                                        <span className="text-zinc-300">1,000</span>
+                                        <span className="text-zinc-500">Voting Period</span>
+                                        <span className="text-zinc-300">{dao.votingPeriod > 100 ? `${Math.round(dao.votingPeriod / 14400)}d` : `${dao.votingPeriod}d`}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-zinc-500">Proposals</span>
+                                        <span className="text-zinc-300">{dao.proposalCount}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-zinc-500">Privacy</span>
+                                        <span className="text-[#3b82f6] font-medium">ZK-Proof Verified</span>
                                     </div>
                                 </div>
                             </CardContent>

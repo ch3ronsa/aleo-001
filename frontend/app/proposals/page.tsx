@@ -1,18 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { Plus, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ConnectWallet } from '@/components/wallet/ConnectWallet'
-import { useWallet } from '@/lib/aleo/wallet'
 import { ProposalList } from '@/components/proposals/ProposalList'
 
 import { Header } from '@/components/layout/Header'
 
 export default function ProposalsPage() {
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#000000] text-zinc-100 font-sans">
             <Header />
 
             <div className="container mx-auto px-4 py-8">

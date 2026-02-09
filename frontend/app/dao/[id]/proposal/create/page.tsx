@@ -8,12 +8,11 @@ import { Label } from '@/components/ui/label'
 // Using native textarea element - no separate Textarea component needed
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
-import { ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useWallet } from '@/lib/aleo/wallet'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { useProposalStore } from '@/lib/store/proposal-store'
-import { PROGRAMS, FEES } from '@/lib/aleo/config'
 import { Header } from '@/components/layout/Header'
 
 export default function CreateProposalPage() {
@@ -22,7 +21,7 @@ export default function CreateProposalPage() {
     const { toast } = useToast()
     const { isConnected, account, requestTransaction } = useWallet()
     const { getDAO } = useDAOStore()
-    const { createProposal } = useProposalStore()
+    const { createProposal, buildCreateProposalTransaction } = useProposalStore()
 
     const [isLoading, setIsLoading] = useState(true)
     const [isCreating, setIsCreating] = useState(false)
@@ -33,7 +32,6 @@ export default function CreateProposalPage() {
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        imageUrl: '',
     })
 
     useEffect(() => {
@@ -62,44 +60,50 @@ export default function CreateProposalPage() {
         setIsCreating(true)
 
         try {
-            // Demo Mode - directly create proposal in store
-            // In production, this would use Puzzle SDK's transaction API
-            const address = account?.address ? String(account.address) : 'demo_address'
+            const address = String(account.address)
+            let txId: string | undefined
 
-            // Create Proposal in Store
+            // Try real wallet transaction
+            if (requestTransaction) {
+                try {
+                    const titleHash = formData.title.length.toString()
+                    const descHash = formData.description.length.toString()
+                    const votingStartDelay = 0 // Start immediately
+                    const votingDuration = dao.votingPeriod > 100 ? dao.votingPeriod : dao.votingPeriod * 14400 // blocks
+                    const transaction = buildCreateProposalTransaction(daoId, titleHash, descHash, votingStartDelay, votingDuration)
+                    const result = await requestTransaction(transaction)
+                    txId = typeof result === 'string' ? result : result?.transactionId
+                } catch (txError) {
+                    console.warn("Wallet transaction failed:", txError)
+                }
+            }
+
+            // Optimistic local update
             createProposal({
                 daoId: dao.id,
                 title: formData.title,
                 description: formData.description,
-                imageUrl: formData.imageUrl || undefined,
                 proposer: address,
                 quorumRequired: dao.quorumPercentage,
                 startTime: Date.now(),
-                endTime: Date.now() + (dao.votingPeriod * 24 * 60 * 60 * 1000), // days to ms
+                endTime: Date.now() + (dao.votingPeriod > 100 ? dao.votingPeriod / 14400 * 86400000 : dao.votingPeriod * 86400000),
             })
 
             toast({
-                title: "Proposal Created",
-                description: "Your proposal is now active and ready for voting.",
+                title: txId ? "Proposal Submitted On-Chain" : "Proposal Created",
+                description: txId
+                    ? "Your proposal has been submitted to Aleo network."
+                    : "Proposal created locally. Connect wallet for on-chain submission.",
             })
 
             router.push(`/dao/${daoId}`)
         } catch (error) {
             console.error("Proposal creation failed:", error)
-            // Fallback for demo
-            if (confirm("Transaction failed. Continue in Demo Mode?")) {
-                createProposal({
-                    daoId: dao.id,
-                    title: formData.title,
-                    description: formData.description,
-                    imageUrl: formData.imageUrl || undefined,
-                    proposer: account?.address ? String(account.address) : 'demo_address',
-                    quorumRequired: dao.quorumPercentage,
-                    startTime: Date.now(),
-                    endTime: Date.now() + (dao.votingPeriod * 24 * 60 * 60 * 1000),
-                })
-                router.push(`/dao/${daoId}`)
-            }
+            toast({
+                title: "Error",
+                description: "Failed to create proposal. Please try again.",
+                variant: "destructive",
+            })
         } finally {
             setIsCreating(false)
         }
@@ -166,19 +170,6 @@ export default function CreateProposalPage() {
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="image" className="flex items-center gap-2">
-                                    <ImageIcon className="h-4 w-4" />
-                                    Cover Image URL (Optional)
-                                </Label>
-                                <Input
-                                    id="image"
-                                    placeholder="https://..."
-                                    className="bg-black border-zinc-800"
-                                    value={formData.imageUrl}
-                                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                                />
-                            </div>
                         </CardContent>
                         <CardFooter className="flex justify-end pt-4 border-t border-zinc-900">
                             <Button type="submit" disabled={isCreating} className="bg-[#3b82f6] hover:bg-[#2563eb] text-white">

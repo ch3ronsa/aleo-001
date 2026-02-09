@@ -2,8 +2,10 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { buildCastVoteTx } from '../aleo/transaction-builder'
+import { PROGRAMS } from '../aleo/config'
 
-export type VoteChoice = 'for' | 'against' | 'abstain'
+export type VoteChoice = 'for' | 'against'
 
 export interface Vote {
     id: string
@@ -12,10 +14,7 @@ export interface Vote {
     choice: VoteChoice
     votingPower: number
     timestamp: number
-    // ZK proof hash - in production this would be a real proof
-    proofHash: string
-    // Vote receipt - proves participation without revealing choice
-    receiptHash: string
+    txId: string | null
 }
 
 export interface VoteReceipt {
@@ -23,8 +22,8 @@ export interface VoteReceipt {
     proposalId: string
     voter: string
     timestamp: number
-    // This is public and verifiable
     verified: boolean
+    txId: string | null
 }
 
 interface VoteState {
@@ -32,24 +31,20 @@ interface VoteState {
     receipts: VoteReceipt[]
     isLoading: boolean
     isGeneratingProof: boolean
+    pendingTxId: string | null
 
     // Actions
-    castVote: (proposalId: string, voter: string, choice: VoteChoice, votingPower: number) => Promise<Vote>
+    castVote: (proposalId: string, voter: string, choice: VoteChoice, votingPower: number, txId?: string) => Promise<Vote>
     hasVoted: (proposalId: string, voter: string) => boolean
     getVoteReceipt: (proposalId: string, voter: string) => VoteReceipt | undefined
     getUserVotes: (voter: string) => Vote[]
     getProposalVotes: (proposalId: string) => Vote[]
-}
-
-const generateHash = () => {
-    const chars = '0123456789abcdef'
-    return Array.from({ length: 64 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    setPendingTx: (txId: string | null) => void
+    buildVoteTransaction: (memberRecordPlaintext: string, proposalId: string, voteChoice: boolean) => ReturnType<typeof buildCastVoteTx>
+    getMemberRecordProgram: () => string
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 15)
-
-// Simulate ZK proof generation delay
-const simulateProofGeneration = () => new Promise<void>((resolve) => setTimeout(resolve, 2000))
 
 export const useVoteStore = create<VoteState>()(
     persist(
@@ -58,13 +53,10 @@ export const useVoteStore = create<VoteState>()(
             receipts: [],
             isLoading: false,
             isGeneratingProof: false,
+            pendingTxId: null,
 
-            castVote: async (proposalId, voter, choice, votingPower) => {
-                // Set loading state
+            castVote: async (proposalId, voter, choice, votingPower, txId) => {
                 set({ isGeneratingProof: true })
-
-                // Simulate ZK proof generation (takes time in real implementation)
-                await simulateProofGeneration()
 
                 const vote: Vote = {
                     id: `vote_${generateId()}`,
@@ -73,22 +65,23 @@ export const useVoteStore = create<VoteState>()(
                     choice,
                     votingPower,
                     timestamp: Date.now(),
-                    proofHash: generateHash(),
-                    receiptHash: generateHash(),
+                    txId: txId || null,
                 }
 
                 const receipt: VoteReceipt = {
-                    receiptHash: vote.receiptHash,
+                    receiptHash: txId || `local_${generateId()}`,
                     proposalId,
                     voter,
                     timestamp: vote.timestamp,
-                    verified: true,
+                    verified: !!txId,
+                    txId: txId || null,
                 }
 
                 set((state) => ({
                     votes: [...state.votes, vote],
                     receipts: [...state.receipts, receipt],
                     isGeneratingProof: false,
+                    pendingTxId: null,
                 }))
 
                 return vote
@@ -109,6 +102,16 @@ export const useVoteStore = create<VoteState>()(
             getProposalVotes: (proposalId) => {
                 return get().votes.filter((v) => v.proposalId === proposalId)
             },
+
+            setPendingTx: (txId) => {
+                set({ pendingTxId: txId })
+            },
+
+            buildVoteTransaction: (memberRecordPlaintext, proposalId, voteChoice) => {
+                return buildCastVoteTx(memberRecordPlaintext, proposalId, voteChoice)
+            },
+
+            getMemberRecordProgram: () => PROGRAMS.DAO_REGISTRY,
         }),
         {
             name: 'aleodao-votes',

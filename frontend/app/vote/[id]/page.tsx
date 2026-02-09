@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Check, Lock, Shield, ExternalLink, Info, User, Clock, ChevronRight } from 'lucide-react'
@@ -13,7 +13,8 @@ import { useWallet } from '@/lib/aleo/wallet'
 import { useProposalStore } from '@/lib/store/proposal-store'
 import { useVoteStore, VoteChoice } from '@/lib/store/vote-store'
 import { useDAOStore } from '@/lib/store/dao-store'
-// PROGRAMS and FEES are used via dynamic import in confirmVote
+import { PROGRAMS } from '@/lib/aleo/config'
+import { buildCastVoteTx } from '@/lib/aleo/transaction-builder'
 import { cn } from '@/lib/utils'
 
 // GitHub Icon Component
@@ -29,10 +30,10 @@ export default function VotePage() {
     const params = useParams()
     const router = useRouter()
     const { toast } = useToast()
-    const { isConnected, account, requestTransaction } = useWallet()
+    const { isConnected, account, requestTransaction, requestRecords } = useWallet()
     const { getProposal, updateProposalVotes } = useProposalStore()
     const { getDAO } = useDAOStore()
-    const { castVote, hasVoted, isGeneratingProof } = useVoteStore()
+    const { castVote, hasVoted } = useVoteStore()
 
     const [selectedOption, setSelectedOption] = useState<VoteChoice | null>(null)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -60,10 +61,9 @@ export default function VotePage() {
         )
     }
 
-    const totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes
+    const totalVotes = proposal.forVotes + proposal.againstVotes
     const yesPercentage = calculatePercentage(proposal.forVotes, totalVotes)
     const noPercentage = calculatePercentage(proposal.againstVotes, totalVotes)
-    const abstainPercentage = calculatePercentage(proposal.abstainVotes, totalVotes)
 
     const handleVoteSubmit = () => {
         if (!isConnected) {
@@ -100,57 +100,58 @@ export default function VotePage() {
 
         setIsVoting(true)
         try {
-            const votingPower = 100 // Mock voting power
             const voterAddress = String(account.address)
+            const voteChoice = selectedOption === 'for' // true = yes, false = no
+            let txId: string | undefined
 
-            // Try real wallet transaction first
-            if (requestTransaction) {
+            // Try real wallet transaction
+            if (requestTransaction && requestRecords) {
                 try {
-                    const { buildCastVoteTransaction } = await import('@/lib/contracts/privateVote')
-                    const choiceMap: Record<string, number> = { 'for': 0, 'against': 1, 'abstain': 2 }
-                    const transaction = buildCastVoteTransaction(
-                        proposal.id,
-                        choiceMap[selectedOption],
-                        votingPower
+                    // Get Member records from wallet
+                    const records = await requestRecords(PROGRAMS.DAO_REGISTRY)
+                    const memberRecord = records?.find((r: any) =>
+                        r.data?.dao_id || r.plaintext?.includes('dao_id')
                     )
-                    await requestTransaction(transaction)
+
+                    if (memberRecord) {
+                        const recordPlaintext = typeof memberRecord === 'string'
+                            ? memberRecord
+                            : memberRecord.plaintext || JSON.stringify(memberRecord)
+
+                        const transaction = buildCastVoteTx(
+                            recordPlaintext,
+                            proposal.id,
+                            voteChoice
+                        )
+                        const result = await requestTransaction(transaction)
+                        txId = typeof result === 'string' ? result : result?.transactionId
+                    }
                 } catch (txError) {
-                    console.warn("Wallet transaction unavailable, using demo mode:", txError)
+                    console.warn("Wallet transaction failed:", txError)
                 }
             }
 
-            // Update local state (demo mode)
-            await castVote(proposal.id, voterAddress, selectedOption, votingPower)
+            // Update local state
+            const votingPower = 1
+            await castVote(proposal.id, voterAddress, selectedOption, votingPower, txId)
             updateProposalVotes(proposal.id, selectedOption, votingPower)
 
             toast({
-                title: "Vote Submitted",
-                description: "Your private vote has been recorded with ZK-proof verification.",
+                title: txId ? "Vote Submitted On-Chain" : "Vote Recorded",
+                description: txId
+                    ? "Your private vote has been submitted with ZK-proof verification."
+                    : "Your vote has been recorded locally. Connect wallet for on-chain submission.",
             })
 
             setShowConfirmDialog(false)
             router.refresh()
         } catch (error) {
             console.error("Vote failed:", error)
-            // Fallback: still record in demo mode
-            try {
-                const voterAddress = String(account.address)
-                const votingPower = 100
-                await castVote(proposal.id, voterAddress, selectedOption, votingPower)
-                updateProposalVotes(proposal.id, selectedOption, votingPower)
-                toast({
-                    title: "Vote Submitted (Demo)",
-                    description: "Your vote has been recorded in demo mode.",
-                })
-                setShowConfirmDialog(false)
-                router.refresh()
-            } catch {
-                toast({
-                    title: "Error",
-                    description: "Failed to submit vote. Please try again.",
-                    variant: "destructive",
-                })
-            }
+            toast({
+                title: "Error",
+                description: "Failed to submit vote. Please try again.",
+                variant: "destructive",
+            })
         } finally {
             setIsVoting(false)
         }
@@ -204,16 +205,6 @@ export default function VotePage() {
                                 </div>
                             </div>
                         </div>
-
-                        {proposal.imageUrl && (
-                            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950">
-                                <img
-                                    src={proposal.imageUrl}
-                                    alt={proposal.title}
-                                    className="h-full w-full object-cover opacity-90 transition-opacity hover:opacity-100"
-                                />
-                            </div>
-                        )}
 
                         <Button
                             variant="outline"
@@ -278,20 +269,6 @@ export default function VotePage() {
                                     <span className="font-medium">Reject</span>
                                     {selectedOption === 'against' && <Check className="h-4 w-4" />}
                                 </button>
-                                <button
-                                    onClick={() => setSelectedOption('abstain')}
-                                    disabled={!isActive || userHasVoted}
-                                    className={cn(
-                                        "w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all",
-                                        selectedOption === 'abstain'
-                                            ? "border-[#3b82f6] bg-[#3b82f6]/10 text-white"
-                                            : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
-                                    )}
-                                >
-                                    <span className="font-medium">Abstain</span>
-                                    {selectedOption === 'abstain' && <Check className="h-4 w-4" />}
-                                </button>
-
                                 {userHasVoted ? (
                                     <div className="pt-2 flex items-center gap-2 text-[#22c55e] text-sm font-medium">
                                         <Shield className="h-4 w-4" />
@@ -383,18 +360,6 @@ export default function VotePage() {
                                             </div>
                                             <div className="text-[11px] text-zinc-500 font-medium">
                                                 {proposal.againstVotes} ALEO
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-sm font-medium">
-                                                <span className="text-zinc-300">Abstain</span>
-                                                <span className="text-white">{abstainPercentage}%</span>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
-                                                <div className="h-full bg-white transition-all duration-1000" style={{ width: `${abstainPercentage}%` }} />
-                                            </div>
-                                            <div className="text-[11px] text-zinc-500 font-medium">
-                                                {proposal.abstainVotes} ALEO
                                             </div>
                                         </div>
                                     </div>

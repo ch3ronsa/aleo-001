@@ -48,7 +48,7 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     const status = statusConfig[proposal.status]
     const StatusIcon = status.icon
 
-    const totalVotePower = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes
+    const totalVotePower = proposal.forVotes + proposal.againstVotes
     const forPercentage = totalVotePower > 0
         ? calculatePercentage(proposal.forVotes, totalVotePower)
         : 0
@@ -60,18 +60,9 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     const timeLeft = isActive ? Math.floor((proposal.endTime - Date.now()) / (86400 * 1000)) : 0
 
     return (
-        <Card className="hover:border-primary/50 transition-colors">
+        <Card className="hover:border-[#3b82f6]/50 transition-colors bg-[#111111] border-zinc-900">
             <CardHeader className="space-y-4">
                 <div className="flex items-start gap-4">
-                    {proposal.imageUrl && (
-                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-zinc-900 bg-zinc-950">
-                            <img
-                                src={proposal.imageUrl}
-                                alt={proposal.title}
-                                className="h-full w-full object-cover opacity-80"
-                            />
-                        </div>
-                    )}
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground">{proposal.daoName}</span>
