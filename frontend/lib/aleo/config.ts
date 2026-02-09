@@ -10,6 +10,7 @@ export const PROGRAMS = {
     DAO_REGISTRY: process.env.NEXT_PUBLIC_DAO_REGISTRY_ID || 'ad_registry_5821.aleo',
     PROPOSAL: process.env.NEXT_PUBLIC_PROPOSAL_ID || 'ad_proposal_5821.aleo',
     PRIVATE_VOTE: process.env.NEXT_PUBLIC_PRIVATE_VOTE_ID || 'ad_vote_5821.aleo',
+    PRIVATE_POLL: process.env.NEXT_PUBLIC_PRIVATE_POLL_ID || 'ad_poll_5821.aleo',
 }
 
 // Transaction fees (in microcredits)
@@ -17,6 +18,8 @@ export const FEES = {
     CREATE_DAO: 5_000_000, // 5 credits
     CREATE_PROPOSAL: 2_000_000, // 2 credits
     CAST_VOTE: 500_000, // 0.5 credits
+    CREATE_POLL: 3_000_000, // 3 credits
+    CAST_POLL_VOTE: 500_000, // 0.5 credits
 }
 
 // Aleo Explorer URL for transaction links

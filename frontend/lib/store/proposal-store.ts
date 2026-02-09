@@ -18,6 +18,7 @@ export interface Proposal {
     status: ProposalStatus
     forVotes: number
     againstVotes: number
+    abstainVotes: number
     totalVoters: number
     quorumRequired: number
     startTime: number
@@ -31,11 +32,11 @@ interface ProposalState {
     isLoading: boolean
 
     // Actions
-    createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'status' | 'forVotes' | 'againstVotes' | 'totalVoters' | 'isOnChain'>) => Proposal
+    createProposal: (proposal: Omit<Proposal, 'id' | 'createdAt' | 'status' | 'forVotes' | 'againstVotes' | 'abstainVotes' | 'totalVoters' | 'isOnChain'>) => Proposal
     getProposal: (id: string) => Proposal | undefined
     getDAOProposals: (daoId: string) => Proposal[]
     getActiveProposals: () => Proposal[]
-    updateProposalVotes: (proposalId: string, voteType: 'for' | 'against', votingPower: number) => void
+    updateProposalVotes: (proposalId: string, voteType: 'for' | 'against' | 'abstain', votingPower: number) => void
     updateProposalStatus: (proposalId: string, status: ProposalStatus) => void
     buildCreateProposalTransaction: (daoId: string, titleHash: string, descHash: string, startDelay: number, duration: number) => ReturnType<typeof buildCreateProposalTx>
     refreshProposalFromChain: (proposalId: string) => Promise<void>
@@ -55,6 +56,7 @@ const SEED_PROPOSALS: Proposal[] = [
         status: 'active',
         forVotes: 0,
         againstVotes: 0,
+        abstainVotes: 0,
         totalVoters: 12,
         quorumRequired: 51,
         startTime: Date.now() - 86400000 * 2,
@@ -71,6 +73,7 @@ const SEED_PROPOSALS: Proposal[] = [
         status: 'active',
         forVotes: 0,
         againstVotes: 0,
+        abstainVotes: 0,
         totalVoters: 8,
         quorumRequired: 51,
         startTime: Date.now() - 86400000,
@@ -87,6 +90,7 @@ const SEED_PROPOSALS: Proposal[] = [
         status: 'passed',
         forVotes: 85,
         againstVotes: 10,
+        abstainVotes: 5,
         totalVoters: 50,
         quorumRequired: 60,
         startTime: Date.now() - 86400000 * 10,
@@ -109,6 +113,7 @@ export const useProposalStore = create<ProposalState>()(
                     status: 'active',
                     forVotes: 0,
                     againstVotes: 0,
+                    abstainVotes: 0,
                     totalVoters: 0,
                     createdAt: Date.now(),
                     isOnChain: false,
@@ -154,8 +159,10 @@ export const useProposalStore = create<ProposalState>()(
 
                         if (voteType === 'for') {
                             updates.forVotes = p.forVotes + votingPower
-                        } else {
+                        } else if (voteType === 'against') {
                             updates.againstVotes = p.againstVotes + votingPower
+                        } else {
+                            updates.abstainVotes = (p.abstainVotes || 0) + votingPower
                         }
 
                         return { ...p, ...updates }

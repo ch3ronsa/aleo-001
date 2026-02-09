@@ -11,6 +11,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useWallet } from '@/lib/aleo/wallet'
 import { useDAOStore } from '@/lib/store/dao-store'
+import { hashStringToField } from '@/lib/aleo/transaction-builder'
 import { Header } from '@/components/layout/Header'
 
 export default function CreateDAOPage() {
@@ -52,7 +53,7 @@ export default function CreateDAOPage() {
             // Try real wallet transaction
             if (requestTransaction) {
                 try {
-                    const nameHash = formData.name.length.toString()
+                    const nameHash = hashStringToField(formData.name)
                     const transaction = buildCreateDAOTransaction(nameHash, votingPeriod, quorum * 100, proposalThreshold)
                     const result = await requestTransaction(transaction)
                     txId = typeof result === 'string' ? result : result?.transactionId

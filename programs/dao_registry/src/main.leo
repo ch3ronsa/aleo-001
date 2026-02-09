@@ -73,9 +73,10 @@ program ad_registry_5821.aleo {
 
     // Register as a member of a DAO (private)
     // Returns a private Member record and a Future
+    // PRIVACY: initial_voting_power is PRIVATE - never visible on-chain
     async transition register_member(
         public dao_id: field,
-        public initial_voting_power: u64
+        private initial_voting_power: u64
     ) -> (Member, Future) {
         // Create private member record
         let member: Member = Member {

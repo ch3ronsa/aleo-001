@@ -48,7 +48,7 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
     const status = statusConfig[proposal.status]
     const StatusIcon = status.icon
 
-    const totalVotePower = proposal.forVotes + proposal.againstVotes
+    const totalVotePower = proposal.forVotes + proposal.againstVotes + (proposal.abstainVotes || 0)
     const forPercentage = totalVotePower > 0
         ? calculatePercentage(proposal.forVotes, totalVotePower)
         : 0

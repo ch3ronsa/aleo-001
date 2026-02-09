@@ -1,0 +1,13 @@
+{
+    "program": "ad_poll_5821.aleo",
+    "version": "0.0.0",
+    "description": "Private polls and surveys with ZK-proof anonymous multi-choice voting",
+    "license": "MIT",
+    "dependencies": [
+        {
+            "name": "ad_registry_5821.aleo",
+            "location": "local",
+            "path": "../dao_registry"
+        }
+    ]
+}

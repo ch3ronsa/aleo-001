@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { calculatePercentage, formatDate, formatAddress } from '@/lib/utils'
 import { useWallet } from '@/lib/aleo/wallet'
 import { useProposalStore } from '@/lib/store/proposal-store'
-import { useVoteStore, VoteChoice } from '@/lib/store/vote-store'
+import { useVoteStore, VoteChoice, VOTE_CHOICE_MAP } from '@/lib/store/vote-store'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { PROGRAMS } from '@/lib/aleo/config'
 import { buildCastVoteTx } from '@/lib/aleo/transaction-builder'
@@ -61,9 +61,10 @@ export default function VotePage() {
         )
     }
 
-    const totalVotes = proposal.forVotes + proposal.againstVotes
+    const totalVotes = proposal.forVotes + proposal.againstVotes + (proposal.abstainVotes || 0)
     const yesPercentage = calculatePercentage(proposal.forVotes, totalVotes)
     const noPercentage = calculatePercentage(proposal.againstVotes, totalVotes)
+    const abstainPercentage = calculatePercentage(proposal.abstainVotes || 0, totalVotes)
 
     const handleVoteSubmit = () => {
         if (!isConnected) {
@@ -101,7 +102,7 @@ export default function VotePage() {
         setIsVoting(true)
         try {
             const voterAddress = String(account.address)
-            const voteChoice = selectedOption === 'for' // true = yes, false = no
+            const voteChoiceU8 = VOTE_CHOICE_MAP[selectedOption] // 0=yes, 1=no, 2=abstain
             let txId: string | undefined
 
             // Try real wallet transaction
@@ -121,7 +122,7 @@ export default function VotePage() {
                         const transaction = buildCastVoteTx(
                             recordPlaintext,
                             proposal.id,
-                            voteChoice
+                            voteChoiceU8
                         )
                         const result = await requestTransaction(transaction)
                         txId = typeof result === 'string' ? result : result?.transactionId
@@ -269,6 +270,19 @@ export default function VotePage() {
                                     <span className="font-medium">Reject</span>
                                     {selectedOption === 'against' && <Check className="h-4 w-4" />}
                                 </button>
+                                <button
+                                    onClick={() => setSelectedOption('abstain')}
+                                    disabled={!isActive || userHasVoted}
+                                    className={cn(
+                                        "w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-all",
+                                        selectedOption === 'abstain'
+                                            ? "border-[#3b82f6] bg-[#3b82f6]/10 text-white"
+                                            : "border-zinc-800 hover:border-zinc-700 text-zinc-400"
+                                    )}
+                                >
+                                    <span className="font-medium">Abstain</span>
+                                    {selectedOption === 'abstain' && <Check className="h-4 w-4" />}
+                                </button>
                                 {userHasVoted ? (
                                     <div className="pt-2 flex items-center gap-2 text-[#22c55e] text-sm font-medium">
                                         <Shield className="h-4 w-4" />
@@ -360,6 +374,18 @@ export default function VotePage() {
                                             </div>
                                             <div className="text-[11px] text-zinc-500 font-medium">
                                                 {proposal.againstVotes} ALEO
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-sm font-medium">
+                                                <span className="text-zinc-300">Abstain</span>
+                                                <span className="text-white">{abstainPercentage}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-zinc-900 rounded-full overflow-hidden">
+                                                <div className="h-full bg-zinc-600 transition-all duration-1000" style={{ width: `${abstainPercentage}%` }} />
+                                            </div>
+                                            <div className="text-[11px] text-zinc-500 font-medium">
+                                                {proposal.abstainVotes || 0} ALEO
                                             </div>
                                         </div>
                                     </div>

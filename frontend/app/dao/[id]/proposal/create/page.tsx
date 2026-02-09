@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { useWallet } from '@/lib/aleo/wallet'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { useProposalStore } from '@/lib/store/proposal-store'
+import { hashStringToField } from '@/lib/aleo/transaction-builder'
 import { Header } from '@/components/layout/Header'
 
 export default function CreateProposalPage() {
@@ -66,8 +67,8 @@ export default function CreateProposalPage() {
             // Try real wallet transaction
             if (requestTransaction) {
                 try {
-                    const titleHash = formData.title.length.toString()
-                    const descHash = formData.description.length.toString()
+                    const titleHash = hashStringToField(formData.title)
+                    const descHash = hashStringToField(formData.description)
                     const votingStartDelay = 0 // Start immediately
                     const votingDuration = dao.votingPeriod > 100 ? dao.votingPeriod : dao.votingPeriod * 14400 // blocks
                     const transaction = buildCreateProposalTransaction(daoId, titleHash, descHash, votingStartDelay, votingDuration)

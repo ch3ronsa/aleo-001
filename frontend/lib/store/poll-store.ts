@@ -2,6 +2,8 @@
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { buildCreatePollTx, buildCastPollVoteTx, hashStringToField } from '../aleo/transaction-builder'
+import { PROGRAMS } from '../aleo/config'
 
 export type PollOption = {
     id: string
@@ -21,14 +23,15 @@ export type Poll = {
     totalVotes: number
     isActive: boolean
     isPrivate: boolean
+    txId: string | null
 }
 
 export type PollVote = {
     pollId: string
     voter: string
-    optionId: string
-    votingPower: number
     timestamp: number
+    txId: string | null
+    // NOTE: optionId and votingPower NOT stored to protect privacy
 }
 
 interface PollStore {
@@ -41,74 +44,63 @@ interface PollStore {
     getPollsByDAO: (daoId: string) => Poll[]
     getActivePolls: () => Poll[]
     hasVoted: (pollId: string, voterAddress: string) => boolean
-    getUserVote: (pollId: string, voterAddress: string) => PollVote | undefined
 
     // Actions
-    createPoll: (poll: Omit<Poll, 'id' | 'createdAt' | 'totalVotes'>) => Poll
-    castVote: (pollId: string, voterAddress: string, optionId: string, votingPower: number) => Promise<void>
+    createPoll: (poll: Omit<Poll, 'id' | 'createdAt' | 'totalVotes' | 'txId'>, txId?: string) => Poll
+    castVote: (pollId: string, voterAddress: string, optionId: string, votingPower: number, txId?: string) => Promise<void>
     updatePollResults: (pollId: string, optionId: string, votingPower: number) => void
+
+    // Transaction builders
+    buildCreatePollTransaction: (daoId: string, title: string, optionCount: number, deadlineDays: number, isPrivate: boolean) => ReturnType<typeof buildCreatePollTx>
+    buildCastPollVoteTransaction: (memberRecordPlaintext: string, pollId: string, selectedOption: number) => ReturnType<typeof buildCastPollVoteTx>
+    getPollProgram: () => string
 }
 
-// Demo polls
-const DEMO_POLLS: Poll[] = [
+// Seed polls for demonstration
+const SEED_POLLS: Poll[] = [
     {
         id: 'poll_1',
         daoId: 'dao_001',
         title: 'Which feature should we prioritize next?',
-        description: 'Help us decide the next major feature for our DAO platform. Your vote is private and will not reveal your token holdings.',
+        description: 'Help us decide the next major feature for our DAO platform. Your vote is private and encrypted with ZK-proofs.',
         options: [
-            { id: 'opt_1', text: 'Mobile App', votes: 450 },
-            { id: 'opt_2', text: 'Advanced Analytics Dashboard', votes: 320 },
-            { id: 'opt_3', text: 'Multi-sig Treasury', votes: 180 },
-            { id: 'opt_4', text: 'NFT Governance', votes: 95 },
+            { id: 'opt_1', text: 'Mobile App', votes: 0 },
+            { id: 'opt_2', text: 'Advanced Analytics Dashboard', votes: 0 },
+            { id: 'opt_3', text: 'Multi-sig Treasury', votes: 0 },
+            { id: 'opt_4', text: 'NFT Governance', votes: 0 },
         ],
-        creator: 'aleo1...',
-        createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
-        deadline: Date.now() + 5 * 24 * 60 * 60 * 1000, // 5 days from now
-        totalVotes: 1045,
+        creator: 'aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc',
+        createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+        deadline: Date.now() + 5 * 24 * 60 * 60 * 1000,
+        totalVotes: 0,
         isActive: true,
         isPrivate: true,
+        txId: null,
     },
     {
         id: 'poll_2',
         daoId: 'dao_002',
         title: 'Community Event Preference',
-        description: 'Vote on the type of community event you\'d like to attend. All votes are anonymous.',
+        description: 'Vote on the type of community event you\'d like to attend. All votes are anonymous via ZK-proofs.',
         options: [
-            { id: 'opt_5', text: 'Virtual Hackathon', votes: 280 },
-            { id: 'opt_6', text: 'In-Person Meetup', votes: 195 },
-            { id: 'opt_7', text: 'AMA Session', votes: 140 },
+            { id: 'opt_5', text: 'Virtual Hackathon', votes: 0 },
+            { id: 'opt_6', text: 'In-Person Meetup', votes: 0 },
+            { id: 'opt_7', text: 'AMA Session', votes: 0 },
         ],
-        creator: 'aleo1...',
+        creator: 'aleo1yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy3s7v2vh',
         createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
         deadline: Date.now() + 3 * 24 * 60 * 60 * 1000,
-        totalVotes: 615,
+        totalVotes: 0,
         isActive: true,
         isPrivate: true,
-    },
-    {
-        id: 'poll_3',
-        daoId: 'dao_001',
-        title: 'Brand Color Scheme',
-        description: 'Choose the new color scheme for our DAO\'s branding materials.',
-        options: [
-            { id: 'opt_8', text: 'Blue & Purple', votes: 520 },
-            { id: 'opt_9', text: 'Green & Teal', votes: 380 },
-            { id: 'opt_10', text: 'Orange & Red', votes: 145 },
-        ],
-        creator: 'aleo1...',
-        createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
-        deadline: Date.now() - 1 * 24 * 60 * 60 * 1000, // Ended 1 day ago
-        totalVotes: 1045,
-        isActive: false,
-        isPrivate: true,
+        txId: null,
     },
 ]
 
 export const usePollStore = create<PollStore>()(
     persist(
         (set, get) => ({
-            polls: DEMO_POLLS,
+            polls: SEED_POLLS,
             votes: [],
 
             getPolls: () => get().polls,
@@ -123,16 +115,13 @@ export const usePollStore = create<PollStore>()(
                 return get().votes.some(v => v.pollId === pollId && v.voter === voterAddress)
             },
 
-            getUserVote: (pollId: string, voterAddress: string) => {
-                return get().votes.find(v => v.pollId === pollId && v.voter === voterAddress)
-            },
-
-            createPoll: (pollData) => {
+            createPoll: (pollData, txId) => {
                 const newPoll: Poll = {
                     ...pollData,
                     id: `poll_${Date.now()}`,
                     createdAt: Date.now(),
                     totalVotes: 0,
+                    txId: txId || null,
                 }
 
                 set(state => ({
@@ -142,31 +131,27 @@ export const usePollStore = create<PollStore>()(
                 return newPoll
             },
 
-            castVote: async (pollId: string, voterAddress: string, optionId: string, votingPower: number) => {
-                // Simulate network delay
-                await new Promise(resolve => setTimeout(resolve, 1500))
-
+            castVote: async (pollId: string, voterAddress: string, _optionId: string, votingPower: number, txId?: string) => {
+                // PRIVACY: We do NOT store the optionId to protect vote choice
                 const vote: PollVote = {
                     pollId,
                     voter: voterAddress,
-                    optionId,
-                    votingPower,
                     timestamp: Date.now(),
+                    txId: txId || null,
                 }
 
                 set(state => ({
                     votes: [...state.votes, vote]
                 }))
 
-                // Update poll results
-                get().updatePollResults(pollId, optionId, votingPower)
+                // Update local poll results for UI feedback
+                get().updatePollResults(pollId, _optionId, votingPower)
             },
 
             updatePollResults: (pollId: string, optionId: string, votingPower: number) => {
                 set(state => ({
                     polls: state.polls.map(poll => {
                         if (poll.id !== pollId) return poll
-
                         return {
                             ...poll,
                             totalVotes: poll.totalVotes + votingPower,
@@ -179,9 +164,22 @@ export const usePollStore = create<PollStore>()(
                     })
                 }))
             },
+
+            buildCreatePollTransaction: (daoId, title, optionCount, deadlineDays, isPrivate) => {
+                const titleHash = hashStringToField(title)
+                const deadlineBlocks = deadlineDays * 14400 // ~14400 blocks per day
+                return buildCreatePollTx(daoId, titleHash, optionCount, deadlineBlocks, isPrivate)
+            },
+
+            buildCastPollVoteTransaction: (memberRecordPlaintext, pollId, selectedOption) => {
+                return buildCastPollVoteTx(memberRecordPlaintext, pollId, selectedOption)
+            },
+
+            getPollProgram: () => PROGRAMS.PRIVATE_POLL,
         }),
         {
             name: 'poll-storage',
+            partialize: (state) => ({ polls: state.polls, votes: state.votes }),
         }
     )
 )

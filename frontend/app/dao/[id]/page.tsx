@@ -6,16 +6,23 @@ import { ArrowLeft, Users, FileText, Plus, Calendar, Shield } from 'lucide-react
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Header } from '@/components/layout/Header'
+import { useWallet } from '@/lib/aleo/wallet'
+import { useToast } from '@/components/ui/use-toast'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { useProposalStore } from '@/lib/store/proposal-store'
 import { ProposalCard } from '@/components/proposals/ProposalCard'
 import { formatNumber, formatDate, formatAddress } from '@/lib/utils'
 
+import { useState } from 'react'
+
 export default function DAODetailsPage() {
     const params = useParams()
     const router = useRouter()
-    const { getDAO } = useDAOStore()
+    const { toast } = useToast()
+    const { isConnected, account, requestTransaction } = useWallet()
+    const { getDAO, joinDAO, buildJoinDAOTransaction } = useDAOStore()
     const { proposals } = useProposalStore()
+    const [isJoining, setIsJoining] = useState(false)
 
     const daoId = params.id as string
     const dao = getDAO(daoId) // This is a sync call in our store but might need handling if undefined
@@ -85,9 +92,37 @@ export default function DAODetailsPage() {
                         </div>
 
                         <div className="flex items-center gap-3 w-full md:w-auto">
-                            {/* Add Member / Join Button if needed */}
-                            <Button disabled variant="outline" className="opacity-50 cursor-not-allowed">
-                                Join DAO (Private)
+                            <Button
+                                variant="outline"
+                                disabled={isJoining || !isConnected}
+                                className="border-[#3b82f6]/50 text-[#3b82f6] hover:bg-[#3b82f6]/10"
+                                onClick={async () => {
+                                    if (!isConnected || !account) {
+                                        toast({ title: "Connect Wallet", description: "Please connect your wallet to join.", variant: "destructive" })
+                                        return
+                                    }
+                                    setIsJoining(true)
+                                    try {
+                                        const address = String(account.address)
+                                        let txId: string | undefined
+                                        if (requestTransaction) {
+                                            try {
+                                                const tx = buildJoinDAOTransaction(daoId, 100)
+                                                const result = await requestTransaction(tx)
+                                                txId = typeof result === 'string' ? result : result?.transactionId
+                                            } catch (e) { console.warn("Join tx failed:", e) }
+                                        }
+                                        joinDAO(daoId, address, 100)
+                                        toast({
+                                            title: txId ? "Joined On-Chain" : "Joined DAO",
+                                            description: txId ? "Your membership record has been created privately on-chain." : "Membership recorded locally.",
+                                        })
+                                    } catch (e) {
+                                        toast({ title: "Error", description: "Failed to join DAO.", variant: "destructive" })
+                                    } finally { setIsJoining(false) }
+                                }}
+                            >
+                                {isJoining ? 'Joining...' : 'Join DAO (Private)'}
                             </Button>
                         </div>
                     </div>

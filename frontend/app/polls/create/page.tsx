@@ -47,6 +47,9 @@ export default function CreatePollPage() {
         setOptions(newOptions)
     }
 
+    const { requestTransaction } = useWallet()
+    const { buildCreatePollTransaction } = usePollStore()
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
@@ -82,6 +85,20 @@ export default function CreatePollPage() {
 
         try {
             const deadline = Date.now() + (daysUntilDeadline * 24 * 60 * 60 * 1000)
+            let txId: string | undefined
+
+            // Try real wallet transaction
+            if (requestTransaction) {
+                try {
+                    const transaction = buildCreatePollTransaction(
+                        selectedDAO, title, validOptions.length, daysUntilDeadline, isPrivate
+                    )
+                    const result = await requestTransaction(transaction)
+                    txId = typeof result === 'string' ? result : result?.transactionId
+                } catch (txError) {
+                    console.warn("Poll creation tx failed:", txError)
+                }
+            }
 
             const poll = createPoll({
                 daoId: selectedDAO,
@@ -96,11 +113,13 @@ export default function CreatePollPage() {
                 deadline,
                 isActive: true,
                 isPrivate,
-            })
+            }, txId)
 
             toast({
-                title: 'Poll Created!',
-                description: 'Your private poll has been created successfully.',
+                title: txId ? 'Poll Created On-Chain' : 'Poll Created',
+                description: txId
+                    ? 'Your private poll has been submitted to Aleo network.'
+                    : 'Poll created locally. Connect wallet for on-chain submission.',
             })
 
             router.push(`/polls/${poll.id}`)

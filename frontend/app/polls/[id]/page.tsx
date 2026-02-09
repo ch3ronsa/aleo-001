@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Lock, Users, Clock, BarChart3, Check } from 'lucide-react'
@@ -12,14 +12,15 @@ import { useToast } from '@/components/ui/use-toast'
 import { usePollStore } from '@/lib/store/poll-store'
 import { useDAOStore } from '@/lib/store/dao-store'
 import { useWallet } from '@/lib/aleo/wallet'
+import { PROGRAMS } from '@/lib/aleo/config'
 import { formatDate, calculatePercentage } from '@/lib/utils'
 
 export default function PollVotePage() {
     const params = useParams()
     const router = useRouter()
     const { toast } = useToast()
-    const { isConnected, account } = useWallet()
-    const { getPoll, hasVoted, castVote, getUserVote } = usePollStore()
+    const { isConnected, account, requestTransaction, requestRecords } = useWallet()
+    const { getPoll, hasVoted, castVote, buildCastPollVoteTransaction } = usePollStore()
     const { getDAO } = useDAOStore()
 
     const [selectedOption, setSelectedOption] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export default function PollVotePage() {
     const dao = poll ? getDAO(poll.daoId) : undefined
     const walletAddress = account?.address ? String(account.address) : ''
     const userHasVoted = isConnected && walletAddress ? hasVoted(pollId, walletAddress) : false
-    const userVote = isConnected && walletAddress ? getUserVote(pollId, walletAddress) : undefined
+    // Privacy: we don't store which option the user chose
 
     if (!poll || !dao) {
         return (
@@ -86,14 +87,41 @@ export default function PollVotePage() {
 
         setIsVoting(true)
         try {
-            const votingPower = 100 // Mock voting power
             const voterAddress = String(account.address)
+            const votingPower = 1
+            let txId: string | undefined
 
-            await castVote(pollId, voterAddress, selectedOption, votingPower)
+            // Try real wallet transaction
+            if (requestTransaction && requestRecords) {
+                try {
+                    const records = await requestRecords(PROGRAMS.DAO_REGISTRY)
+                    const memberRecord = records?.find((r: any) =>
+                        r.data?.dao_id || r.plaintext?.includes('dao_id')
+                    )
+
+                    if (memberRecord) {
+                        const recordPlaintext = typeof memberRecord === 'string'
+                            ? memberRecord
+                            : memberRecord.plaintext || JSON.stringify(memberRecord)
+
+                        // Find the option index for the contract
+                        const optionIndex = poll.options.findIndex(o => o.id === selectedOption)
+                        const transaction = buildCastPollVoteTransaction(recordPlaintext, pollId, optionIndex)
+                        const result = await requestTransaction(transaction)
+                        txId = typeof result === 'string' ? result : result?.transactionId
+                    }
+                } catch (txError) {
+                    console.warn("Poll vote tx failed:", txError)
+                }
+            }
+
+            await castVote(pollId, voterAddress, selectedOption, votingPower, txId)
 
             toast({
-                title: 'Success',
-                description: 'Your private vote has been submitted.',
+                title: txId ? 'Vote Submitted On-Chain' : 'Vote Recorded',
+                description: txId
+                    ? 'Your private vote has been submitted with ZK-proof verification.'
+                    : 'Your vote has been recorded. Connect wallet for on-chain submission.',
             })
 
             setShowConfirmDialog(false)
@@ -170,16 +198,12 @@ export default function PollVotePage() {
                                 {poll.options.map(option => {
                                     const percentage = calculatePercentage(option.votes, poll.totalVotes)
                                     const isSelected = selectedOption === option.id
-                                    const isUserVote = userVote?.optionId === option.id
-
                                     return (
                                         <button
                                             key={option.id}
                                             onClick={() => !userHasVoted && isActive && setSelectedOption(option.id)}
                                             disabled={userHasVoted || !isActive}
-                                            className={`w-full p-4 rounded-lg border-2 transition-all text-left ${isUserVote
-                                                    ? 'border-[#a855f7] bg-[#a855f7]/10'
-                                                    : isSelected
+                                            className={`w-full p-4 rounded-lg border-2 transition-all text-left ${isSelected
                                                         ? 'border-[#a855f7] bg-[#a855f7]/5'
                                                         : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/50'
                                                 } ${userHasVoted || !isActive ? 'cursor-default' : 'cursor-pointer'}`}
@@ -187,9 +211,6 @@ export default function PollVotePage() {
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-semibold">{option.text}</span>
-                                                    {isUserVote && (
-                                                        <Check className="h-4 w-4 text-[#a855f7]" />
-                                                    )}
                                                 </div>
                                                 <span className="text-sm text-zinc-400">{percentage}%</span>
                                             </div>

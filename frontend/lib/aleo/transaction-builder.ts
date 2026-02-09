@@ -15,6 +15,20 @@ export interface AleoTransaction {
 }
 
 /**
+ * Simple hash function for generating deterministic field values from strings.
+ * Uses a numeric hash to avoid name collisions (unlike string-length approach).
+ */
+export function hashStringToField(str: string): string {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & 0x7FFFFFFF // Keep positive 31-bit integer
+    }
+    return hash.toString()
+}
+
+/**
  * create_dao(public name_hash: field, public voting_period: u32, public quorum: u32, public proposal_threshold: u64) -> Future
  */
 export function buildCreateDAOTx(
@@ -37,7 +51,8 @@ export function buildCreateDAOTx(
 }
 
 /**
- * register_member(public dao_id: field, public initial_voting_power: u64) -> (Member, Future)
+ * register_member(public dao_id: field, private initial_voting_power: u64) -> (Member, Future)
+ * NOTE: initial_voting_power is PRIVATE - the wallet handles encryption
  */
 export function buildRegisterMemberTx(
     daoId: string,
@@ -79,16 +94,16 @@ export function buildCreateProposalTx(
 }
 
 /**
- * cast_vote(member_record: Member, public proposal_id: field, private vote_choice: bool)
+ * cast_vote(member_record: Member, public proposal_id: field, private vote_choice: u8)
  * -> (Member, PrivateVote, VoteReceipt, Future)
  *
- * IMPORTANT: member_record is a private record held by the wallet.
- * The wallet decrypts and provides it when requestRecords is called.
+ * vote_choice: 0 = yes, 1 = no, 2 = abstain
+ * PRIVACY: vote_choice is private, never enters finalize scope
  */
 export function buildCastVoteTx(
     memberRecordPlaintext: string,
     proposalId: string,
-    voteChoice: boolean
+    voteChoice: number // 0=yes, 1=no, 2=abstain
 ): AleoTransaction {
     return {
         programId: PROGRAMS.PRIVATE_VOTE,
@@ -96,7 +111,7 @@ export function buildCastVoteTx(
         inputs: [
             memberRecordPlaintext,
             `${proposalId}field`,
-            `${voteChoice}`,
+            `${voteChoice}u8`,
         ],
         fee: FEES.CAST_VOTE,
     }
@@ -123,5 +138,56 @@ export function buildFinalizeProposalTx(proposalId: string, quorum: number): Ale
         functionName: 'finalize_proposal',
         inputs: [`${proposalId}field`, `${quorum}u32`],
         fee: FEES.CAST_VOTE,
+    }
+}
+
+// ============================================================
+// POLL TRANSACTIONS
+// ============================================================
+
+/**
+ * create_poll(public dao_id: field, public title_hash: field, public option_count: u8, public deadline_blocks: u32, public is_private: bool)
+ */
+export function buildCreatePollTx(
+    daoId: string,
+    titleHash: string,
+    optionCount: number,
+    deadlineBlocks: number,
+    isPrivate: boolean
+): AleoTransaction {
+    return {
+        programId: PROGRAMS.PRIVATE_POLL,
+        functionName: 'create_poll',
+        inputs: [
+            `${daoId}field`,
+            `${titleHash}field`,
+            `${optionCount}u8`,
+            `${deadlineBlocks}u32`,
+            `${isPrivate}`,
+        ],
+        fee: FEES.CREATE_POLL,
+    }
+}
+
+/**
+ * cast_poll_vote(member_record: Member, public poll_id: field, private selected_option: u8)
+ * -> (Member, PollVote, PollReceipt, Future)
+ *
+ * PRIVACY: selected_option is private, never enters finalize scope
+ */
+export function buildCastPollVoteTx(
+    memberRecordPlaintext: string,
+    pollId: string,
+    selectedOption: number // 0-indexed
+): AleoTransaction {
+    return {
+        programId: PROGRAMS.PRIVATE_POLL,
+        functionName: 'cast_poll_vote',
+        inputs: [
+            memberRecordPlaintext,
+            `${pollId}field`,
+            `${selectedOption}u8`,
+        ],
+        fee: FEES.CAST_POLL_VOTE,
     }
 }

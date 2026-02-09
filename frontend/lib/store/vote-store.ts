@@ -5,16 +5,22 @@ import { persist } from 'zustand/middleware'
 import { buildCastVoteTx } from '../aleo/transaction-builder'
 import { PROGRAMS } from '../aleo/config'
 
-export type VoteChoice = 'for' | 'against'
+export type VoteChoice = 'for' | 'against' | 'abstain'
+
+// Map frontend choice to contract u8 values
+export const VOTE_CHOICE_MAP: Record<VoteChoice, number> = {
+    'for': 0,
+    'against': 1,
+    'abstain': 2,
+}
 
 export interface Vote {
     id: string
     proposalId: string
     voter: string
-    choice: VoteChoice
-    votingPower: number
     timestamp: number
     txId: string | null
+    // NOTE: choice and votingPower are NOT stored to protect privacy
 }
 
 export interface VoteReceipt {
@@ -40,7 +46,7 @@ interface VoteState {
     getUserVotes: (voter: string) => Vote[]
     getProposalVotes: (proposalId: string) => Vote[]
     setPendingTx: (txId: string | null) => void
-    buildVoteTransaction: (memberRecordPlaintext: string, proposalId: string, voteChoice: boolean) => ReturnType<typeof buildCastVoteTx>
+    buildVoteTransaction: (memberRecordPlaintext: string, proposalId: string, voteChoice: number) => ReturnType<typeof buildCastVoteTx>
     getMemberRecordProgram: () => string
 }
 
@@ -55,15 +61,14 @@ export const useVoteStore = create<VoteState>()(
             isGeneratingProof: false,
             pendingTxId: null,
 
-            castVote: async (proposalId, voter, choice, votingPower, txId) => {
+            castVote: async (proposalId, voter, _choice, _votingPower, txId) => {
                 set({ isGeneratingProof: true })
 
+                // PRIVACY: We do NOT store the vote choice or voting power
                 const vote: Vote = {
                     id: `vote_${generateId()}`,
                     proposalId,
                     voter,
-                    choice,
-                    votingPower,
                     timestamp: Date.now(),
                     txId: txId || null,
                 }
