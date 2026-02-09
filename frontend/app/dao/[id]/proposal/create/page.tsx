@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea' // Assuming we have this, or fallback to standard textarea
+// Using native textarea element - no separate Textarea component needed
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { ArrowLeft, Loader2, Image as ImageIcon } from 'lucide-react'
@@ -26,7 +26,7 @@ export default function CreateProposalPage() {
 
     const [isLoading, setIsLoading] = useState(true)
     const [isCreating, setIsCreating] = useState(false)
-    const [dao, setDao] = useState<any>(null)
+    const [dao, setDao] = useState<ReturnType<typeof getDAO>>(undefined)
 
     const daoId = params.id as string
 
@@ -42,7 +42,8 @@ export default function CreateProposalPage() {
             setDao(foundDao)
         }
         setIsLoading(false)
-    }, [daoId, getDAO])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [daoId])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -63,7 +64,7 @@ export default function CreateProposalPage() {
         try {
             // Demo Mode - directly create proposal in store
             // In production, this would use Puzzle SDK's transaction API
-            const address = account?.address || 'demo_address'
+            const address = account?.address ? String(account.address) : 'demo_address'
 
             // Create Proposal in Store
             createProposal({
@@ -92,7 +93,7 @@ export default function CreateProposalPage() {
                     title: formData.title,
                     description: formData.description,
                     imageUrl: formData.imageUrl || undefined,
-                    proposer: account?.address || 'demo_address',
+                    proposer: account?.address ? String(account.address) : 'demo_address',
                     quorumRequired: dao.quorumPercentage,
                     startTime: Date.now(),
                     endTime: Date.now() + (dao.votingPeriod * 24 * 60 * 60 * 1000),

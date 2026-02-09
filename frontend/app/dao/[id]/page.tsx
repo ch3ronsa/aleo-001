@@ -65,11 +65,7 @@ export default function DAODetailsPage() {
                         <div className="flex items-end gap-6">
                             {/* DAO Icon Placeholder */}
                             <div className="h-24 w-24 rounded-2xl bg-zinc-950 border-4 border-[#111111] flex items-center justify-center shadow-xl">
-                                {dao.imageUrl ? (
-                                    <img src={dao.imageUrl} alt={dao.name} className="h-full w-full object-cover rounded-xl" />
-                                ) : (
-                                    <Shield className="h-10 w-10 text-zinc-600" />
-                                )}
+                                <Shield className="h-10 w-10 text-zinc-600" />
                             </div>
 
                             <div className="mb-1">
@@ -143,7 +139,7 @@ export default function DAODetailsPage() {
                                 <div className="space-y-4 pt-4 border-t border-zinc-900">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-zinc-500">Creator</span>
-                                        <span className="font-mono text-zinc-300">{formatAddress("aleo1...")}</span>
+                                        <span className="font-mono text-zinc-300">{formatAddress(dao.creator)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-zinc-500">Network</span>

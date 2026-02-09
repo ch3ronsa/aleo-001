@@ -54,7 +54,26 @@ export const useWallet = () => {
         requestBulkRecords,
         decrypt,
         sign,
-        // For compatibility with some older parts of the app that might expect account.address()
-        account: publicKey ? { address: () => publicKey } : null,
+        // Unified account object compatible with all app patterns:
+        // - account.address (string property)
+        // - account.address() (function call - via Proxy)
+        // - account.address().to_string() (Leo wallet adapter pattern - via Proxy)
+        account: publicKey ? new Proxy({ address: publicKey }, {
+            get(target, prop) {
+                if (prop === 'address') {
+                    // Return a callable string-like object
+                    const addressFn = () => publicKey
+                    // Support .to_string() chain
+                    addressFn.to_string = () => publicKey
+                    addressFn.toString = () => publicKey
+                    // Allow direct string comparison
+                    Object.defineProperty(addressFn, Symbol.toPrimitive, {
+                        value: () => publicKey
+                    })
+                    return addressFn
+                }
+                return target[prop as keyof typeof target]
+            }
+        }) : null,
     }
 }

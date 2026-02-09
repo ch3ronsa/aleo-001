@@ -52,8 +52,8 @@ program ad_proposal_5821.aleo {
         public voting_start_delay: u32,
         public voting_duration: u32
     ) -> Future {
-        // Generate unique proposal ID
-        let proposal_id: field = BHP256::hash_to_field(title_hash);
+        // Generate unique proposal ID from dao_id + title_hash to prevent collisions across DAOs
+        let proposal_id: field = BHP256::hash_to_field(dao_id + title_hash);
 
         return finalize_create_proposal(dao_id, proposal_id, self.caller, title_hash, description_hash, voting_start_delay, voting_duration);
     }
@@ -136,20 +136,24 @@ program ad_proposal_5821.aleo {
     async function finalize_finalize_proposal(proposal_id: field, quorum: u32) {
         // Get proposal
         let proposal: Proposal = proposals.get(proposal_id);
-        
+
         // Verify voting has ended
-        assert(block.height > proposal.voting_end);
-        
+        assert(block.height >= proposal.voting_end);
+
         // Get vote tally
         let tally: VoteTally = vote_tallies.get(proposal_id);
-        
-        // Calculate if quorum met and proposal succeeded
-        let yes_percentage: u64 = (tally.yes_votes * 10000u64) / (tally.yes_votes + tally.no_votes);
-        let quorum_met: bool = tally.total_votes > 0u64;
-        
-        // Determine final status using ternary to avoid reassignment
+
+        // Check quorum: total votes must meet minimum threshold (quorum is in basis points, e.g. 5000 = 50%)
+        let quorum_met: bool = tally.total_votes >= (quorum as u64);
+
+        // Calculate yes percentage safely (avoid division by zero)
+        // If no votes were cast, proposal fails
+        let total_cast: u64 = tally.yes_votes + tally.no_votes;
+        let yes_percentage: u64 = total_cast > 0u64 ? (tally.yes_votes * 10000u64) / total_cast : 0u64;
+
+        // Proposal succeeds if quorum met AND majority (>50%) voted yes
         let final_status: u8 = (quorum_met && yes_percentage >= 5000u64) ? 2u8 : 3u8;
-        
+
         proposal_status.set(proposal_id, final_status);
     }
 

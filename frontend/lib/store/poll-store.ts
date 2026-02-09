@@ -53,7 +53,7 @@ interface PollStore {
 const DEMO_POLLS: Poll[] = [
     {
         id: 'poll_1',
-        daoId: 'dao_1',
+        daoId: 'dao_001',
         title: 'Which feature should we prioritize next?',
         description: 'Help us decide the next major feature for our DAO platform. Your vote is private and will not reveal your token holdings.',
         options: [
@@ -71,7 +71,7 @@ const DEMO_POLLS: Poll[] = [
     },
     {
         id: 'poll_2',
-        daoId: 'dao_2',
+        daoId: 'dao_002',
         title: 'Community Event Preference',
         description: 'Vote on the type of community event you\'d like to attend. All votes are anonymous.',
         options: [
@@ -88,7 +88,7 @@ const DEMO_POLLS: Poll[] = [
     },
     {
         id: 'poll_3',
-        daoId: 'dao_1',
+        daoId: 'dao_001',
         title: 'Brand Color Scheme',
         description: 'Choose the new color scheme for our DAO\'s branding materials.',
         options: [

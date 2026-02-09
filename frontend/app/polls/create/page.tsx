@@ -92,7 +92,7 @@ export default function CreatePollPage() {
                     text,
                     votes: 0,
                 })),
-                creator: account.address().to_string(),
+                creator: String(account.address),
                 deadline,
                 isActive: true,
                 isPrivate,

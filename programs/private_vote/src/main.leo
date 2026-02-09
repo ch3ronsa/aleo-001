@@ -22,10 +22,13 @@ program ad_vote_5821.aleo {
     }
 
     // Track if address has voted on a proposal (prevent double voting)
-    mapping has_voted: field => bool;  // hash(proposal_id, address) => bool
-    
-    // Aggregate vote tallies (updated privately)
-    mapping vote_tallies: field => field;  // proposal_id => encrypted_tally
+    // Key: hash(proposal_id + hash(voter_address))
+    mapping has_voted: field => bool;
+
+    // Separate yes/no vote tallies per proposal
+    mapping yes_tallies: field => u64;   // proposal_id => total yes votes
+    mapping no_tallies: field => u64;    // proposal_id => total no votes
+    mapping total_tallies: field => u64; // proposal_id => total vote count
 
     // Constructor - required for deployment (Leo 3.1+)
     @noupgrade
@@ -68,29 +71,30 @@ program ad_vote_5821.aleo {
         vote_choice: bool,
         voting_power: u64
     ) {
-        // Create unique key for voter+proposal
-        let vote_key: field = BHP256::hash_to_field(proposal_id);
-        
+        // Create unique key combining proposal_id and voter address
+        // This ensures each voter can only vote once per proposal
+        let voter_hash: field = BHP256::hash_to_field(voter);
+        let vote_key: field = BHP256::hash_to_field(proposal_id + voter_hash);
+
         // Ensure voter hasn't voted on this proposal yet
         let already_voted: bool = has_voted.get_or_use(vote_key, false);
         assert(!already_voted);
-        
+
         // Mark as voted
         has_voted.set(vote_key, true);
-        
-        // Update vote tally (this happens in finalize, still private)
-        // In production, this would use more sophisticated ZK aggregation
-        let current_tally: field = vote_tallies.get_or_use(proposal_id, 0field);
-        
-        // Encode vote: yes votes in upper bits, no votes in lower bits
-        // This is simplified - production would use proper ZK accumulation
-        let vote_value: u64 = voting_power;
+
+        // Update separate yes/no tallies
+        let current_total: u64 = total_tallies.get_or_use(proposal_id, 0u64);
+        total_tallies.set(proposal_id, current_total + 1u64);
+
         if vote_choice {
-            // Yes vote - add to yes tally
-            vote_tallies.set(proposal_id, current_tally + (vote_value as field) * 1000000field);
+            // Yes vote
+            let current_yes: u64 = yes_tallies.get_or_use(proposal_id, 0u64);
+            yes_tallies.set(proposal_id, current_yes + voting_power);
         } else {
-            // No vote - add to no tally
-            vote_tallies.set(proposal_id, current_tally + (vote_value as field));
+            // No vote
+            let current_no: u64 = no_tallies.get_or_use(proposal_id, 0u64);
+            no_tallies.set(proposal_id, current_no + voting_power);
         }
     }
 

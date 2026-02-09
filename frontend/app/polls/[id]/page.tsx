@@ -29,8 +29,9 @@ export default function PollVotePage() {
     const pollId = params.id as string
     const poll = getPoll(pollId)
     const dao = poll ? getDAO(poll.daoId) : undefined
-    const userHasVoted = isConnected && account ? hasVoted(pollId, account.address().to_string()) : false
-    const userVote = isConnected && account ? getUserVote(pollId, account.address().to_string()) : undefined
+    const walletAddress = account?.address ? String(account.address) : ''
+    const userHasVoted = isConnected && walletAddress ? hasVoted(pollId, walletAddress) : false
+    const userVote = isConnected && walletAddress ? getUserVote(pollId, walletAddress) : undefined
 
     if (!poll || !dao) {
         return (
@@ -86,7 +87,7 @@ export default function PollVotePage() {
         setIsVoting(true)
         try {
             const votingPower = 100 // Mock voting power
-            const voterAddress = account.address().to_string()
+            const voterAddress = String(account.address)
 
             await castVote(pollId, voterAddress, selectedOption, votingPower)
 

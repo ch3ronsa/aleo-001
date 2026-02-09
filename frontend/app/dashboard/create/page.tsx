@@ -45,7 +45,7 @@ export default function CreateDAOPage() {
         try {
             // Demo Mode - directly create DAO in store
             // In production, this would use Puzzle SDK's transaction API
-            const address = account?.address || 'demo_address'
+            const address = account?.address ? String(account.address) : 'demo_address'
 
             // Optimistic UI update: Assume success for demo UX
             const votingPeriod = parseInt(formData.votingPeriod)
@@ -77,7 +77,7 @@ export default function CreateDAOPage() {
                 createDAO({
                     name: formData.name,
                     description: formData.description,
-                    creator: account.address().to_string(),
+                    creator: String(account.address),
                     votingPeriod,
                     quorumPercentage
                 })
