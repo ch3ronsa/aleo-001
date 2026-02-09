@@ -8,11 +8,6 @@
             "name": "ad_registry_5821.aleo",
             "location": "local",
             "path": "../dao_registry"
-        },
-        {
-            "name": "ad_proposal_5821.aleo",
-            "location": "local",
-            "path": "../proposal"
         }
     ]
 }

@@ -61,13 +61,12 @@ program ad_vote_5821.aleo {
         };
 
         // Return member record (unchanged), vote, receipt, and async call
-        return (member_record, vote, receipt, finalize_cast_vote(proposal_id, self.caller, member_record.dao_id, vote_choice, member_record.voting_power));
+        return (member_record, vote, receipt, finalize_cast_vote(proposal_id, self.caller, vote_choice, member_record.voting_power));
     }
 
     async function finalize_cast_vote(
         proposal_id: field,
         voter: address,
-        dao_id: field,
         vote_choice: bool,
         voting_power: u64
     ) {
