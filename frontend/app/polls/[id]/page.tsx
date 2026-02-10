@@ -106,9 +106,8 @@ export default function PollVotePage() {
 
                         // Find the option index for the contract
                         const optionIndex = poll.options.findIndex(o => o.id === selectedOption)
-                        const transaction = buildCastPollVoteTransaction(recordPlaintext, pollId, optionIndex)
-                        const result = await requestTransaction(transaction)
-                        txId = typeof result === 'string' ? result : result?.transactionId
+                        const transaction = buildCastPollVoteTransaction(voterAddress, recordPlaintext, poll.daoId, pollId, optionIndex)
+                        txId = await requestTransaction(transaction)
                     }
                 } catch (txError) {
                     console.warn("Poll vote tx failed:", txError)

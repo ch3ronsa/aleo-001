@@ -51,8 +51,8 @@ interface PollStore {
     updatePollResults: (pollId: string, optionId: string, votingPower: number) => void
 
     // Transaction builders
-    buildCreatePollTransaction: (daoId: string, title: string, optionCount: number, deadlineDays: number, isPrivate: boolean) => ReturnType<typeof buildCreatePollTx>
-    buildCastPollVoteTransaction: (memberRecordPlaintext: string, pollId: string, selectedOption: number) => ReturnType<typeof buildCastPollVoteTx>
+    buildCreatePollTransaction: (address: string, daoId: string, title: string, optionCount: number, deadlineDays: number, isPrivate: boolean) => ReturnType<typeof buildCreatePollTx>
+    buildCastPollVoteTransaction: (address: string, memberRecordPlaintext: string, daoId: string, pollId: string, selectedOption: number) => ReturnType<typeof buildCastPollVoteTx>
     getPollProgram: () => string
 }
 
@@ -165,14 +165,14 @@ export const usePollStore = create<PollStore>()(
                 }))
             },
 
-            buildCreatePollTransaction: (daoId, title, optionCount, deadlineDays, isPrivate) => {
+            buildCreatePollTransaction: (address, daoId, title, optionCount, deadlineDays, isPrivate) => {
                 const titleHash = hashStringToField(title)
                 const deadlineBlocks = deadlineDays * 14400 // ~14400 blocks per day
-                return buildCreatePollTx(daoId, titleHash, optionCount, deadlineBlocks, isPrivate)
+                return buildCreatePollTx(address, daoId, titleHash, optionCount, deadlineBlocks, isPrivate)
             },
 
-            buildCastPollVoteTransaction: (memberRecordPlaintext, pollId, selectedOption) => {
-                return buildCastPollVoteTx(memberRecordPlaintext, pollId, selectedOption)
+            buildCastPollVoteTransaction: (address, memberRecordPlaintext, daoId, pollId, selectedOption) => {
+                return buildCastPollVoteTx(address, memberRecordPlaintext, daoId, pollId, selectedOption)
             },
 
             getPollProgram: () => PROGRAMS.PRIVATE_POLL,

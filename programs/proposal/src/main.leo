@@ -113,14 +113,17 @@ program ad_proposal_5821.aleo {
     async function finalize_activate_proposal(proposal_id: field) {
         // Get proposal
         let proposal: Proposal = proposals.get(proposal_id);
-        
+
         // Verify voting has started
         assert(block.height >= proposal.voting_start);
-        
+
+        // SECURITY: Verify proposal has not expired (prevent activating expired proposals)
+        assert(block.height < proposal.voting_end);
+
         // Verify proposal is pending
         let current_status: u8 = proposal_status.get(proposal_id);
         assert_eq(current_status, 0u8);
-        
+
         // Update status to Active
         proposal_status.set(proposal_id, 1u8);
     }

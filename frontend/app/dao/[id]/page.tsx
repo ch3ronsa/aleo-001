@@ -107,9 +107,8 @@ export default function DAODetailsPage() {
                                         let txId: string | undefined
                                         if (requestTransaction) {
                                             try {
-                                                const tx = buildJoinDAOTransaction(daoId, 100)
-                                                const result = await requestTransaction(tx)
-                                                txId = typeof result === 'string' ? result : result?.transactionId
+                                                const tx = buildJoinDAOTransaction(address, daoId, 100)
+                                                txId = await requestTransaction(tx)
                                             } catch (e) { console.warn("Join tx failed:", e) }
                                         }
                                         joinDAO(daoId, address, 100)

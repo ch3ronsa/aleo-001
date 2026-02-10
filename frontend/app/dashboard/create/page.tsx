@@ -41,22 +41,43 @@ export default function CreateDAOPage() {
             return
         }
 
+        // Input validation
+        if (formData.name.length < 3 || formData.name.length > 50) {
+            toast({ title: "Validation Error", description: "DAO name must be 3-50 characters.", variant: "destructive" })
+            return
+        }
+        if (formData.description.length < 10 || formData.description.length > 500) {
+            toast({ title: "Validation Error", description: "Description must be 10-500 characters.", variant: "destructive" })
+            return
+        }
+        const votingPeriod = parseInt(formData.votingPeriod)
+        const quorum = parseInt(formData.quorum)
+        const proposalThreshold = parseInt(formData.proposalThreshold)
+        if (isNaN(votingPeriod) || votingPeriod < 1) {
+            toast({ title: "Validation Error", description: "Voting period must be at least 1 block.", variant: "destructive" })
+            return
+        }
+        if (isNaN(quorum) || quorum < 1 || quorum > 100) {
+            toast({ title: "Validation Error", description: "Quorum must be between 1-100%.", variant: "destructive" })
+            return
+        }
+        if (isNaN(proposalThreshold) || proposalThreshold < 1) {
+            toast({ title: "Validation Error", description: "Proposal threshold must be at least 1.", variant: "destructive" })
+            return
+        }
+
         setIsCreating(true)
 
         try {
             const address = String(account.address)
-            const votingPeriod = parseInt(formData.votingPeriod)
-            const quorum = parseInt(formData.quorum)
-            const proposalThreshold = parseInt(formData.proposalThreshold)
             let txId: string | undefined
 
             // Try real wallet transaction
             if (requestTransaction) {
                 try {
                     const nameHash = hashStringToField(formData.name)
-                    const transaction = buildCreateDAOTransaction(nameHash, votingPeriod, quorum * 100, proposalThreshold)
-                    const result = await requestTransaction(transaction)
-                    txId = typeof result === 'string' ? result : result?.transactionId
+                    const transaction = buildCreateDAOTransaction(address, nameHash, votingPeriod, quorum * 100, proposalThreshold)
+                    txId = await requestTransaction(transaction)
                 } catch (txError) {
                     console.warn("Wallet transaction failed:", txError)
                 }

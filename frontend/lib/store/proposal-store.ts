@@ -38,7 +38,7 @@ interface ProposalState {
     getActiveProposals: () => Proposal[]
     updateProposalVotes: (proposalId: string, voteType: 'for' | 'against' | 'abstain', votingPower: number) => void
     updateProposalStatus: (proposalId: string, status: ProposalStatus) => void
-    buildCreateProposalTransaction: (daoId: string, titleHash: string, descHash: string, startDelay: number, duration: number) => ReturnType<typeof buildCreateProposalTx>
+    buildCreateProposalTransaction: (address: string, daoId: string, titleHash: string, descHash: string, startDelay: number, duration: number) => ReturnType<typeof buildCreateProposalTx>
     refreshProposalFromChain: (proposalId: string) => Promise<void>
     loadProposals: (daoId: string) => Promise<void>
 }
@@ -126,6 +126,7 @@ export const useProposalStore = create<ProposalState>()(
                     title: proposalData.title,
                     description: proposalData.description,
                     titleHash: newProposal.id,
+                    descriptionHash: newProposal.id,
                     createdAt: newProposal.createdAt,
                 })
 
@@ -178,8 +179,8 @@ export const useProposalStore = create<ProposalState>()(
                 }))
             },
 
-            buildCreateProposalTransaction: (daoId, titleHash, descHash, startDelay, duration) => {
-                return buildCreateProposalTx(daoId, titleHash, descHash, startDelay, duration)
+            buildCreateProposalTransaction: (address, daoId, titleHash, descHash, startDelay, duration) => {
+                return buildCreateProposalTx(address, daoId, titleHash, descHash, startDelay, duration)
             },
 
             refreshProposalFromChain: async (proposalId: string) => {
@@ -196,7 +197,7 @@ export const useProposalStore = create<ProposalState>()(
                                 p.id === proposalId
                                     ? {
                                         ...p,
-                                        proposer: onChainProposal.creator,
+                                        proposer: onChainProposal.proposer,
                                         forVotes: tallies.yesVotes,
                                         againstVotes: tallies.noVotes,
                                         totalVoters: tallies.totalVoters,

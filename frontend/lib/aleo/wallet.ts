@@ -14,9 +14,8 @@ export const useWallet = () => {
         select,
         requestTransaction,
         requestRecords,
-        requestBulkRecords,
         decrypt,
-        sign
+        signMessage,
     } = useAleoWallet()
 
     const connect = useCallback(async () => {
@@ -51,9 +50,8 @@ export const useWallet = () => {
         // Aleo specific methods
         requestTransaction,
         requestRecords,
-        requestBulkRecords,
         decrypt,
-        sign,
+        signMessage,
         // Unified account object compatible with all app patterns:
         // - account.address (string property)
         // - account.address() (function call - via Proxy)

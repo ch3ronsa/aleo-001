@@ -136,13 +136,18 @@ program ad_poll_5821.aleo {
 
     // Cast a private vote on a poll
     // PRIVACY: selected_option and voting_power never reach finalize
+    // SECURITY: dao_id required to verify member belongs to the poll's DAO
     async transition cast_poll_vote(
         member_record: ad_registry_5821.aleo/Member,
+        public dao_id: field,       // DAO this poll belongs to (for cross-DAO prevention)
         public poll_id: field,
         private selected_option: u8  // 0-indexed option choice (private!)
     ) -> (ad_registry_5821.aleo/Member, PollVote, PollReceipt, Future) {
         // Validate option is in range (0-7 max)
         assert(selected_option <= 7u8);
+
+        // SECURITY: Verify member belongs to the correct DAO
+        assert_eq(member_record.dao_id, dao_id);
 
         // Compute tally increment for each option privately
         // Only the selected option gets the voting_power, all others get 0

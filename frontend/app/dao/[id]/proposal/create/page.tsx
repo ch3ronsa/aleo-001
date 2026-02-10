@@ -58,6 +58,16 @@ export default function CreateProposalPage() {
 
         if (!dao) return
 
+        // Input validation
+        if (formData.title.length < 5 || formData.title.length > 100) {
+            toast({ title: "Validation Error", description: "Title must be 5-100 characters.", variant: "destructive" })
+            return
+        }
+        if (formData.description.length < 20 || formData.description.length > 2000) {
+            toast({ title: "Validation Error", description: "Description must be 20-2000 characters.", variant: "destructive" })
+            return
+        }
+
         setIsCreating(true)
 
         try {
@@ -71,9 +81,8 @@ export default function CreateProposalPage() {
                     const descHash = hashStringToField(formData.description)
                     const votingStartDelay = 0 // Start immediately
                     const votingDuration = dao.votingPeriod > 100 ? dao.votingPeriod : dao.votingPeriod * 14400 // blocks
-                    const transaction = buildCreateProposalTransaction(daoId, titleHash, descHash, votingStartDelay, votingDuration)
-                    const result = await requestTransaction(transaction)
-                    txId = typeof result === 'string' ? result : result?.transactionId
+                    const transaction = buildCreateProposalTransaction(address, daoId, titleHash, descHash, votingStartDelay, votingDuration)
+                    txId = await requestTransaction(transaction)
                 } catch (txError) {
                     console.warn("Wallet transaction failed:", txError)
                 }

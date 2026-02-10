@@ -46,7 +46,7 @@ interface VoteState {
     getUserVotes: (voter: string) => Vote[]
     getProposalVotes: (proposalId: string) => Vote[]
     setPendingTx: (txId: string | null) => void
-    buildVoteTransaction: (memberRecordPlaintext: string, proposalId: string, voteChoice: number) => ReturnType<typeof buildCastVoteTx>
+    buildVoteTransaction: (address: string, memberRecordPlaintext: string, daoId: string, proposalId: string, voteChoice: number) => ReturnType<typeof buildCastVoteTx>
     getMemberRecordProgram: () => string
 }
 
@@ -112,8 +112,8 @@ export const useVoteStore = create<VoteState>()(
                 set({ pendingTxId: txId })
             },
 
-            buildVoteTransaction: (memberRecordPlaintext, proposalId, voteChoice) => {
-                return buildCastVoteTx(memberRecordPlaintext, proposalId, voteChoice)
+            buildVoteTransaction: (address, memberRecordPlaintext, daoId, proposalId, voteChoice) => {
+                return buildCastVoteTx(address, memberRecordPlaintext, daoId, proposalId, voteChoice)
             },
 
             getMemberRecordProgram: () => PROGRAMS.DAO_REGISTRY,

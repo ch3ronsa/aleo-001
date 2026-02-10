@@ -120,12 +120,13 @@ export default function VotePage() {
                             : memberRecord.plaintext || JSON.stringify(memberRecord)
 
                         const transaction = buildCastVoteTx(
+                            voterAddress,
                             recordPlaintext,
+                            proposal.daoId,
                             proposal.id,
                             voteChoiceU8
                         )
-                        const result = await requestTransaction(transaction)
-                        txId = typeof result === 'string' ? result : result?.transactionId
+                        txId = await requestTransaction(transaction)
                     }
                 } catch (txError) {
                     console.warn("Wallet transaction failed:", txError)

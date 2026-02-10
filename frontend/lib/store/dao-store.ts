@@ -39,8 +39,8 @@ interface DAOState {
     getDAOMembers: (daoId: string) => Member[]
     getUserDAOs: (address: string) => DAO[]
     // New: blockchain integration
-    buildCreateDAOTransaction: (nameHash: string, votingPeriod: number, quorum: number, proposalThreshold: number) => ReturnType<typeof buildCreateDAOTx>
-    buildJoinDAOTransaction: (daoId: string, votingPower: number) => ReturnType<typeof buildRegisterMemberTx>
+    buildCreateDAOTransaction: (address: string, nameHash: string, votingPeriod: number, quorum: number, proposalThreshold: number) => ReturnType<typeof buildCreateDAOTx>
+    buildJoinDAOTransaction: (address: string, daoId: string, votingPower: number) => ReturnType<typeof buildRegisterMemberTx>
     refreshDAOFromChain: (daoId: string) => Promise<void>
     loadDAOs: () => Promise<void>
 }
@@ -150,12 +150,12 @@ export const useDAOStore = create<DAOState>()(
             },
 
             // Build transaction for wallet submission
-            buildCreateDAOTransaction: (nameHash, votingPeriod, quorum, proposalThreshold) => {
-                return buildCreateDAOTx(nameHash, votingPeriod, quorum, proposalThreshold)
+            buildCreateDAOTransaction: (address, nameHash, votingPeriod, quorum, proposalThreshold) => {
+                return buildCreateDAOTx(address, nameHash, votingPeriod, quorum, proposalThreshold)
             },
 
-            buildJoinDAOTransaction: (daoId, votingPower) => {
-                return buildRegisterMemberTx(daoId, votingPower)
+            buildJoinDAOTransaction: (address, daoId, votingPower) => {
+                return buildRegisterMemberTx(address, daoId, votingPower)
             },
 
             // Refresh DAO data from chain

@@ -177,18 +177,6 @@ export default function HomePage() {
                         return (
                             <Link key={proposal.id} href={`/vote/${proposal.id}`}>
                                 <Card className="group bg-[#0a0a0a] border-zinc-900 hover:border-[#3b82f6]/50 transition-all duration-300 overflow-hidden rounded-2xl h-full flex flex-col">
-                                    {proposal.imageUrl && (
-                                        <div className="relative aspect-video w-full overflow-hidden">
-                                            <img
-                                                src={proposal.imageUrl}
-                                                alt={proposal.title}
-                                                className="h-full w-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
-                                            />
-                                            <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-[#22c55e]/90 text-white text-[10px] font-bold uppercase">
-                                                Active
-                                            </div>
-                                        </div>
-                                    )}
                                     <div className="p-6 flex-1 flex flex-col">
                                         <div className="flex items-center gap-2 mb-4">
                                             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{dao?.name}</span>

@@ -49,13 +49,20 @@ program ad_vote_5821.aleo {
     // - voting_power (u64) is private and never leaves the transition
     // - Only a commitment hash is passed to finalize, which encodes the
     //   vote tally updates without revealing the individual choice
+    //
+    // SECURITY: dao_id is required to prevent cross-DAO voting.
+    // member_record.dao_id is verified to match the provided dao_id.
     async transition cast_vote(
         member_record: ad_registry_5821.aleo/Member,  // Proves membership and voting power
+        public dao_id: field,           // DAO this vote belongs to (for cross-DAO prevention)
         public proposal_id: field,
         private vote_choice: u8  // 0 = yes, 1 = no, 2 = abstain
     ) -> (ad_registry_5821.aleo/Member, PrivateVote, VoteReceipt, Future) {
         // Validate vote choice (0, 1, or 2)
         assert(vote_choice <= 2u8);
+
+        // SECURITY: Verify member belongs to the correct DAO
+        assert_eq(member_record.dao_id, dao_id);
 
         // Compute tally increments privately
         // Only the matching tally gets the voting power, others get 0

@@ -71,13 +71,26 @@ export default function CreatePollPage() {
             return
         }
 
+        // Input validation
+        if (title.length < 5 || title.length > 100) {
+            toast({ title: 'Validation Error', description: 'Title must be 5-100 characters.', variant: 'destructive' })
+            return
+        }
+
         const validOptions = options.filter(opt => opt.trim() !== '')
         if (validOptions.length < 2) {
-            toast({
-                title: 'Invalid Options',
-                description: 'Please provide at least 2 poll options.',
-                variant: 'destructive',
-            })
+            toast({ title: 'Invalid Options', description: 'Please provide at least 2 poll options.', variant: 'destructive' })
+            return
+        }
+
+        const tooLongOption = validOptions.find(opt => opt.length > 100)
+        if (tooLongOption) {
+            toast({ title: 'Validation Error', description: 'Each option must be under 100 characters.', variant: 'destructive' })
+            return
+        }
+
+        if (isNaN(daysUntilDeadline) || daysUntilDeadline < 1 || daysUntilDeadline > 30) {
+            toast({ title: 'Validation Error', description: 'Deadline must be 1-30 days.', variant: 'destructive' })
             return
         }
 
@@ -91,10 +104,9 @@ export default function CreatePollPage() {
             if (requestTransaction) {
                 try {
                     const transaction = buildCreatePollTransaction(
-                        selectedDAO, title, validOptions.length, daysUntilDeadline, isPrivate
+                        String(account.address), selectedDAO, title, validOptions.length, daysUntilDeadline, isPrivate
                     )
-                    const result = await requestTransaction(transaction)
-                    txId = typeof result === 'string' ? result : result?.transactionId
+                    txId = await requestTransaction(transaction)
                 } catch (txError) {
                     console.warn("Poll creation tx failed:", txError)
                 }
